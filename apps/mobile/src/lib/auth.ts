@@ -22,7 +22,7 @@ export async function signUpCitizen({ email, password, fullName }: AuthDraft) {
   }
 
   if (data.session) {
-    await upsertCurrentProfile(fullName);
+    await upsertCurrentProfile(data.user?.id ?? null, fullName, data.user?.email ?? null);
   }
 
   return data;
@@ -38,7 +38,11 @@ export async function signInCitizen(email: string, password: string) {
     throw error;
   }
 
-  await upsertCurrentProfile(data.user.user_metadata.full_name ?? "");
+  await upsertCurrentProfile(
+    data.user.id,
+    data.user.user_metadata.full_name ?? "",
+    data.user.email ?? null
+  );
   return data;
 }
 
@@ -50,20 +54,20 @@ export async function signOutCitizen() {
   }
 }
 
-export async function upsertCurrentProfile(fullName: string) {
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+export async function upsertCurrentProfile(
+  userId: string | null,
+  fullName: string,
+  email: string | null
+) {
+  if (!userId) {
     return null;
   }
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert({
-      id: user.id,
-      full_name: fullName.trim() || user.email,
+      id: userId,
+      full_name: fullName.trim() || email,
       role: "citizen"
     })
     .select("id")

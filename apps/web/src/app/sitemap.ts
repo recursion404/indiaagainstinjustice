@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { puneLocations } from "@citizens-first/shared";
 import { siteConfig } from "@/lib/site";
+import { getPublicIssues } from "@/lib/data";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     "",
     "/report-traffic-problem",
@@ -10,17 +10,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/volunteer",
     "/polls",
     "/traffic-rules-pledge",
-    "/traffic-issues/pune/baner-heavy-traffic-pun-001245"
   ];
+  const issues = await getPublicIssues(500);
 
   return [
     ...staticRoutes.map((route) => ({
       url: `${siteConfig.url}${route}`,
       lastModified: new Date()
     })),
-    ...puneLocations.map((location) => ({
-      url: `${siteConfig.url}/pune-traffic/${location}`,
-      lastModified: new Date()
+    ...issues.filter((issue) => issue.indexable).map((issue) => ({
+      url: `${siteConfig.url}/traffic-issues/pune/${issue.slug}`,
+      lastModified: new Date(issue.publishedAt ?? issue.createdAt)
     }))
   ];
 }

@@ -1,31 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, MapPin, ShieldCheck, Siren } from "lucide-react";
+import { getPublicIssues } from "@/lib/data";
 
-const sampleIssues = [
-  {
-    id: "PUN-001245",
-    title: "Heavy traffic near Baner main road",
-    area: "Baner",
-    status: "Citizen report",
-    support: 182
-  },
-  {
-    id: "PUN-001246",
-    title: "Signal timing issue at Wakad junction",
-    area: "Wakad",
-    status: "Under review",
-    support: 141
-  },
-  {
-    id: "PUN-001247",
-    title: "Illegal parking blocking PMPML stop",
-    area: "Kothrud",
-    status: "Published",
-    support: 96
-  }
-];
+export default async function HomePage() {
+  const issues = await getPublicIssues(3);
+  const supportTotal = issues.reduce((sum, issue) => sum + issue.supportCount, 0);
 
-export default function HomePage() {
   return (
     <main>
       <section className="container hero">
@@ -58,11 +38,11 @@ export default function HomePage() {
           <div className="roadLines" />
           <div className="stats">
             <div className="stat">
-              <strong>3</strong>
-              <span>sample issues</span>
+              <strong>{issues.length}</strong>
+              <span>public issues</span>
             </div>
             <div className="stat">
-              <strong>419</strong>
+              <strong>{supportTotal}</strong>
               <span>citizen supports</span>
             </div>
           </div>
@@ -78,19 +58,25 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid">
-            {sampleIssues.map((issue) => (
+            {issues.map((issue) => (
               <article className="card" key={issue.id}>
-                <span className="status">{issue.status}</span>
+                <span className="status">{issue.status.replaceAll("_", " ")}</span>
                 <h3>{issue.title}</h3>
                 <p className="issueMeta">
-                  <MapPin size={16} /> {issue.area}, Pune
+                  <MapPin size={16} /> {issue.area}, {issue.city}
                 </p>
-                <p>{issue.support} citizens support this issue.</p>
-                <Link href={`/traffic-issues/pune/${issue.area.toLowerCase()}-traffic-${issue.id.toLowerCase()}`}>
+                <p>{issue.supportCount} citizens support this issue.</p>
+                <Link href={`/traffic-issues/pune/${issue.slug}`}>
                   View public issue
                 </Link>
               </article>
             ))}
+            {issues.length === 0 ? (
+              <article className="card">
+                <h3>No public issues yet</h3>
+                <p>Citizen reports appear here after review and publication.</p>
+              </article>
+            ) : null}
           </div>
         </div>
       </section>

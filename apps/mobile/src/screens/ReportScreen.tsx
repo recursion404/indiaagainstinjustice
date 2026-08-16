@@ -117,7 +117,7 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
         latitude: location?.latitude,
         longitude: location?.longitude,
         photo
-      });
+      }, session.user.id);
       setTitle("");
       setArea("");
       setPublicSummary("");

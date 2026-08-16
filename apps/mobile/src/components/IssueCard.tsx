@@ -5,10 +5,13 @@ import { Metric } from "./Metric";
 
 type IssueCardProps = {
   issue: PublicIssue;
+  shared: boolean;
+  supported: boolean;
+  onShare: () => void;
   onSupport: () => void;
 };
 
-export function IssueCard({ issue, onSupport }: IssueCardProps) {
+export function IssueCard({ issue, shared, supported, onShare, onSupport }: IssueCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.row}>
@@ -21,8 +24,19 @@ export function IssueCard({ issue, onSupport }: IssueCardProps) {
       <View style={styles.footer}>
         <Metric label="supports" value={issue.supportCount} />
         <Metric label="shares" value={issue.shareCount} />
-        <TouchableOpacity style={styles.button} onPress={onSupport}>
-          <Text style={styles.buttonText}>Support</Text>
+        <TouchableOpacity
+          style={[styles.secondaryButton, shared && styles.secondaryButtonSelected]}
+          onPress={onShare}
+        >
+          <Text style={[styles.secondaryButtonText, shared && styles.selectedButtonText]}>
+            {shared ? "Shared" : "Share"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, supported && styles.buttonSelected]}
+          onPress={onSupport}
+        >
+          <Text style={styles.buttonText}>{supported ? "Supported" : "Support"}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -93,5 +107,28 @@ const styles = StyleSheet.create({
   buttonText: {
     color: colors.surface,
     fontWeight: "900"
+  },
+  secondaryButton: {
+    alignItems: "center",
+    borderColor: colors.road,
+    borderRadius: 6,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 40,
+    paddingHorizontal: 16
+  },
+  secondaryButtonText: {
+    color: colors.road,
+    fontWeight: "900"
+  },
+  secondaryButtonSelected: {
+    backgroundColor: colors.paleGreen,
+    borderColor: colors.civic
+  },
+  selectedButtonText: {
+    color: colors.civic
+  },
+  buttonSelected: {
+    backgroundColor: colors.civic
   }
 });

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import type { PublicIssue } from "@citizens-first/shared";
 import type { Session } from "@supabase/supabase-js";
 import { signInCitizen, signOutCitizen, signUpCitizen } from "../lib/auth";
+import { fetchMyIssues } from "../lib/issues";
 import { colors, spacing } from "../theme";
 
 type ProfileScreenProps = {
@@ -15,6 +17,8 @@ export function ProfileScreen({ onOpenReport, session }: ProfileScreenProps) {
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [isLoading, setIsLoading] = useState(false);
+  const [myIssues, setMyIssues] = useState<PublicIssue[]>([]);
+  const [isLoadingIssues, setIsLoadingIssues] = useState(false);
   const [statusKind, setStatusKind] = useState<"info" | "success" | "error">("info");
   const [statusMessage, setStatusMessage] = useState(
     "Step 1: create an account or sign in. Step 2: submit a traffic report."
@@ -29,6 +33,39 @@ export function ProfileScreen({ onOpenReport, session }: ProfileScreenProps) {
         : "Sign in with your existing account before reporting an issue."
     );
   }
+
+  useEffect(() => {
+    if (!session) {
+      setMyIssues([]);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingIssues(true);
+
+    fetchMyIssues(session.user.id)
+      .then((issues) => {
+        if (isMounted) {
+          setMyIssues(issues);
+        }
+      })
+      .catch((error) => {
+        if (isMounted) {
+          const message = error instanceof Error ? error.message : "Unable to load reports.";
+          setStatusKind("error");
+          setStatusMessage(message);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingIssues(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
 
   async function handleAuth() {
     if (mode === "signup" && !fullName.trim()) {
@@ -116,6 +153,23 @@ export function ProfileScreen({ onOpenReport, session }: ProfileScreenProps) {
           <TouchableOpacity onPress={onOpenReport} style={styles.button}>
             <Text style={styles.buttonText}>Report an issue</Text>
           </TouchableOpacity>
+          <View style={styles.sectionDivider} />
+          <Text style={styles.sectionTitle}>My reports</Text>
+          {isLoadingIssues ? <Text style={styles.copy}>Loading your reports...</Text> : null}
+          {!isLoadingIssues && myIssues.length === 0 ? (
+            <Text style={styles.copy}>
+              No reports submitted yet. Submit your first issue from the Report tab.
+            </Text>
+          ) : null}
+          {myIssues.map((issue) => (
+            <View key={issue.id} style={styles.issueRow}>
+              <Text style={styles.issueTitle}>{issue.title}</Text>
+              <Text style={styles.issueMeta}>
+                {issue.publicId} | {issue.area}, Pune
+              </Text>
+              <Text style={styles.issueStatus}>{issue.status.replaceAll("_", " ")}</Text>
+            </View>
+          ))}
           <TouchableOpacity
             disabled={isLoading}
             onPress={handleSignOut}
@@ -255,6 +309,44 @@ const styles = StyleSheet.create({
   label: {
     color: colors.muted,
     fontWeight: "800"
+  },
+  sectionDivider: {
+    backgroundColor: colors.line,
+    height: 1
+  },
+  sectionTitle: {
+    color: colors.ink,
+    fontSize: 20,
+    fontWeight: "900"
+  },
+  issueRow: {
+    borderColor: colors.line,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.md
+  },
+  issueTitle: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: "900"
+  },
+  issueMeta: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "700"
+  },
+  issueStatus: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.paleGreen,
+    borderRadius: 999,
+    color: colors.civic,
+    fontSize: 11,
+    fontWeight: "900",
+    overflow: "hidden",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    textTransform: "uppercase"
   },
   button: {
     alignItems: "center",

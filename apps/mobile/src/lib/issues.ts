@@ -19,12 +19,8 @@ export type IssueDraft = {
   photo?: IssuePhotoDraft | null;
 };
 
-export async function submitTrafficIssue(draft: IssueDraft) {
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+export async function submitTrafficIssue(draft: IssueDraft, userId: string | null) {
+  if (!userId) {
     throw new Error("Please sign in before submitting a traffic report.");
   }
 
@@ -35,7 +31,7 @@ export async function submitTrafficIssue(draft: IssueDraft) {
     .from("traffic_issues")
     .insert({
       public_id: publicId,
-      reporter_id: user.id,
+      reporter_id: userId,
       title: draft.title.trim(),
       slug,
       category: draft.category,
@@ -57,7 +53,7 @@ export async function submitTrafficIssue(draft: IssueDraft) {
       issueId: data.id,
       publicId: data.public_id,
       photo: draft.photo,
-      userId: user.id
+      userId
     });
   }
 
@@ -96,23 +92,123 @@ export async function fetchPublicIssues(): Promise<PublicIssue[]> {
   }));
 }
 
-export async function supportIssue(issueId: string) {
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+export async function fetchMySupportedIssueIds(userId: string | null) {
+  if (!userId) {
+    return [];
+  }
 
-  if (!user) {
+  const { data, error } = await supabase
+    .from("issue_supports")
+    .select("issue_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((support) => support.issue_id as string);
+}
+
+export async function fetchMySharedIssueIds(userId: string | null) {
+  if (!userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("issue_share_events")
+    .select("issue_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((share) => share.issue_id as string);
+}
+
+export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[]> {
+  if (!userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("traffic_issues")
+    .select(
+      "id, public_id, title, slug, category, status, area, city, public_summary, support_count, share_count, created_at"
+    )
+    .eq("reporter_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(25);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((issue) => ({
+    id: issue.id,
+    publicId: issue.public_id,
+    title: issue.title,
+    slug: issue.slug,
+    category: issue.category,
+    status: issue.status,
+    area: issue.area,
+    city: "Pune",
+    summary: issue.public_summary,
+    supportCount: issue.support_count,
+    shareCount: issue.share_count,
+    createdAt: issue.created_at
+  }));
+}
+
+export async function supportIssue(issueId: string, userId: string | null) {
+  if (!userId) {
     throw new Error("Please sign in before supporting an issue.");
   }
 
   const { error } = await supabase.from("issue_supports").insert({
     issue_id: issueId,
-    user_id: user.id
+    user_id: userId
   });
 
   if (error) {
     if (error.code === "23505") {
       throw new Error("You have already supported this issue.");
+    }
+
+    throw error;
+  }
+}
+
+export async function removeIssueSupport(issueId: string, userId: string | null) {
+  if (!userId) {
+    throw new Error("Please sign in before removing support.");
+  }
+
+  const { error } = await supabase
+    .from("issue_supports")
+    .delete()
+    .eq("issue_id", issueId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function recordIssueShare(issueId: string, channel: string, userId: string | null) {
+  if (!userId) {
+    throw new Error("Please sign in before sharing an issue.");
+  }
+
+  const { error } = await supabase.from("issue_share_events").insert({
+    issue_id: issueId,
+    channel,
+    user_id: userId
+  });
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("You have already shared this issue.");
     }
 
     throw error;

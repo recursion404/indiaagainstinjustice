@@ -38,9 +38,9 @@ export default function App() {
 
   const screen = {
     report: <ReportScreen onOpenProfile={() => setActiveTab("profile")} session={session} />,
-    issues: <IssuesScreen />,
-    polls: <PollsScreen />,
-    pledge: <PledgeScreen />,
+    issues: <IssuesScreen onOpenProfile={() => setActiveTab("profile")} session={session} />,
+    polls: <PollsScreen onOpenProfile={() => setActiveTab("profile")} session={session} />,
+    pledge: <PledgeScreen onOpenProfile={() => setActiveTab("profile")} session={session} />,
     profile: <ProfileScreen onOpenReport={() => setActiveTab("report")} session={session} />
   }[activeTab];
 

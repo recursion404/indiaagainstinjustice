@@ -1,5 +1,166 @@
 # Changelog
 
+## 2026-08-16 - Admin role reconciliation
+
+- Added migration `0012_reconcile_initial_admin.sql` for the case where the initial admin migration ran before the requested account/profile existed.
+- The migration updates the existing profile for `ganeshpawar.me@gmail.com` to `admin` and restores the role-protection trigger immediately afterward.
+
+## 2026-08-16 - Initial admin account
+
+- Added migration `0011_promote_initial_admin.sql` to promote the existing `ganeshpawar.me@gmail.com` profile to the `admin` role.
+- The migration matches the account through `auth.users` and updates only the corresponding `public.profiles` row.
+- Existing role-escalation protection remains active for all non-admin users.
+
+## 2026-08-16 - Website implementation pass
+
+### Public website
+
+- Replaced placeholder homepage issue cards with live, privacy-filtered Supabase issues.
+- Replaced placeholder Top Traffic Problems cards with real public issue ranking by support count.
+- Replaced the sample public issue page with dynamic `/traffic-issues/pune/[slug]` pages.
+- Added dynamic issue metadata, canonical URLs, JSON-LD report data, public action history and noindex behavior for non-indexable issues.
+- Updated the sitemap to include only public indexable issues; unpublished location placeholders are not added to the sitemap.
+- Added live public polls with one vote per authenticated user and vote result bars.
+- Added live pledge count and website pledge submission.
+- Added a volunteer request form backed by Supabase.
+- Added public content post pages for published SEO content.
+
+### Website report journey
+
+- Added website account creation and sign-in before report submission.
+- Added report title, category, area, public summary, private address, browser location and photo upload.
+- Website reports default to private `submitted` state and remain hidden from public pages until reviewed.
+- Website media uploads use the existing private `issue-photos` Supabase Storage bucket.
+
+### Admin website
+
+- Added protected `/admin` moderation dashboard.
+- Added moderation queue filters for every issue workflow status.
+- Added controls for status, public visibility, sensitive flag, search indexing, authority name/reference, internal notes and rejection reason.
+- Added public action updates for authority responses, recorded actions, citizen verification and resolutions.
+- Added `/admin/content` SEO publishing desk for the FRD content types and SEO/social metadata fields.
+
+### Database migrations
+
+- Added `0008_admin_moderation_and_public_updates.sql` with issue update history, admin-only policies, publication fields and admin content/poll management policies.
+- Added `0009_engagement_and_volunteer_workflows.sql` with one pledge per user, support read policy and volunteer requests.
+
+### Verification note
+
+- Source-level checks only were performed. No development server, browser session or automated test was started, following the manual-testing workflow.
+
+## 2026-08-16 - Auth request minimization
+
+This update removes repeated full-user auth requests while changing tabs or loading app data.
+
+### Security and privacy
+
+- Removed all feature-level calls to `supabase.auth.getUser()` from the app. Those calls requested the full authenticated user payload from `/auth/v1/user` whenever issue, poll, pledge, or profile data loaded.
+- The app now passes the already-loaded `session.user.id` from the app shell into data helpers. Tab navigation no longer causes full user-profile fetches.
+- Authentication bootstrap remains centralized in `App.tsx` through one persisted `getSession()` read and the auth state listener.
+- Sign-in and sign-up profile upserts now use the user data returned directly by the authentication operation instead of issuing a second full-user request.
+- No full auth response is logged by the app.
+
+### Functional areas updated
+
+- Report submission uses the current session user ID for `reporter_id` and private photo storage paths.
+- Issues uses the current session user ID for loading owned reports, checking support/share state, adding support, removing support, and recording a share.
+- Polls uses the current session user ID for loading the signed-in user's selected vote and recording votes.
+- Pledge submission uses the current session user ID.
+- Profile report loading uses the current session user ID.
+
+### Verification note
+
+- Source-level call-site verification was completed without starting the app or running automated/manual tests. Please verify the Network panel manually and confirm that tab changes no longer request `/auth/v1/user`.
+
+## 2026-08-16 - App live functionality pass
+
+This update continues replacing placeholder app behavior with Supabase-backed user journeys. The implementation follows the dependency chain of the app: users authenticate first, then they can report issues, view their own report history, vote in polls, take pledges, support issues, and share issues.
+
+### Issues screen live data correction
+
+- Removed sample issue fallback from the live Issues screen.
+- Issues screen now starts empty and only renders real public Supabase rows.
+- Added empty state explaining that reports appear after review/publication.
+- Added loading/status copy for live Supabase issue fetches.
+- Added current user's supported issue lookup.
+- Added current user's shared issue lookup.
+- Added selected UI state for issues already supported by the current user.
+- Added selected UI state for issues already shared by the current user.
+
+### Support behavior
+
+- Changed issue support from demo increment behavior to a real toggle.
+- First tap inserts `issue_supports`.
+- Second tap removes that user's `issue_supports` row.
+- Counter updates optimistically in the UI after the database operation succeeds.
+- Added migration policy so citizens can remove their own support rows.
+- Support count remains database-backed by the existing support counter triggers.
+
+### Share behavior
+
+- Changed issue sharing so one signed-in user can record at most one share per issue.
+- Added `user_id` to `issue_share_events`.
+- Added unique constraint on `(issue_id, user_id)`.
+- Replaced anonymous share insert policy with authenticated user share insert policy.
+- Added policy so citizens can read their own share events.
+- Share count remains database-backed by share event trigger.
+- UI now shows `Shared` after the current user has shared an issue.
+
+### Polls
+
+- Replaced the local-only polls screen with live Supabase polls.
+- Added `apps/mobile/src/lib/polls.ts`.
+- Added `fetchPublicPolls()` to load public polls and their options.
+- Added `voteInPoll()` to record or update a signed-in user's vote.
+- Added inline poll status messages for loading, voting, success, and errors.
+- Added Profile shortcut when a signed-out user tries to vote.
+- Added vote result bars for each option.
+- Added total vote count display per poll.
+- Added selected-option state for users who already voted.
+- Added migration `0005_live_polls.sql`.
+- Added `vote_count` to `poll_options`.
+- Added policies so signed-in citizens can read and update their own poll vote.
+- Added poll vote insert, update, and delete triggers to keep option counts accurate.
+- Added a starter public poll:
+  - `What should Pune fix first to reduce traffic jams?`
+
+### Profile and user report history
+
+- Added `fetchMyIssues()` to load reports submitted by the current signed-in citizen.
+- Updated Profile so it is no longer only an account screen.
+- Profile now shows:
+  - signed-in email
+  - report action shortcut
+  - user's submitted reports
+  - report public ID
+  - report area
+  - report status
+- Added empty state when the user has not submitted reports yet.
+- Added error handling when report history fails to load.
+
+### Pledge
+
+- Added `fetchPledgeCount()` to show the live number of pledge records.
+- Updated pledge screen to require sign-in with an inline Profile shortcut.
+- Replaced alert-only pledge errors with visible inline status.
+- Added live pledge count display.
+- Added success state after a pledge is recorded.
+
+### Issue sharing
+
+- Added `recordIssueShare()` for issue share events.
+- Added a Share button to issue cards.
+- Added native share sheet support through React Native `Share`.
+- Kept shares separate from supports, matching the FRD requirement.
+- Added migration `0006_issue_share_counters.sql`.
+- Added trigger to increment `traffic_issues.share_count` whenever an `issue_share_events` row is inserted.
+
+### Current testing note
+
+- Runtime testing was intentionally not run by the assistant in this pass because manual testing is being handled by the project owner.
+- Changes were made in small slices so the app can be manually tested journey by journey.
+
 ## 2026-08-16 - Initial Citizens First Pune platform scaffold
 
 This release creates the first working foundation for the Citizens First Pune traffic reporting platform. The project is structured as a monorepo with a React Native app, a Next.js SEO-focused website, shared TypeScript types, and Supabase migrations for the backend.
