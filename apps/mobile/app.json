@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Citizens First Pune",
+    "slug": "citizens-first-pune",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "citizensfirstpune",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Citizens First Pune uses the camera to attach traffic issue photos to citizen reports.",
+        "NSPhotoLibraryUsageDescription": "Citizens First Pune uses photo library access to attach traffic issue photos to citizen reports.",
+        "NSLocationWhenInUseUsageDescription": "Citizens First Pune uses your location to attach an approximate issue point to a traffic report."
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_MEDIA_IMAGES"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#f7f5ee"
+      }
+    }
+  }
+}
