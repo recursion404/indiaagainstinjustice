@@ -1,13 +1,21 @@
 :root {
-  --ink: #17201b;
-  --muted: #536057;
-  --paper: #f7f5ee;
-  --surface: #ffffff;
-  --line: #d8ddd4;
-  --signal: #e5b72e;
-  --civic: #26735b;
-  --road: #303734;
-  --alert: #c24a35;
+  --navy: #0B1F4B;
+  --traffic: #F4511E;
+  --white: #FFFFFF;
+  --green: #138A36;
+  --saffron: #FF671F;
+  --ink: var(--navy);
+  --muted: #41516F;
+  --paper: #F5F8FC;
+  --surface: var(--white);
+  --line: #D7DFEA;
+  --signal: var(--saffron);
+  --civic: var(--green);
+  --road: var(--navy);
+  --alert: var(--traffic);
+  --pale-green: #E7F4EB;
+  --pale-alert: #FDE7E0;
+  --pale-saffron: #FFF0E6;
 }
 
 * {
@@ -39,8 +47,8 @@ select {
 .shell {
   min-height: 100vh;
   background:
-    linear-gradient(120deg, rgba(229, 183, 46, 0.2), transparent 35%),
-    linear-gradient(180deg, #faf9f4 0%, var(--paper) 100%);
+    linear-gradient(120deg, rgba(255, 103, 31, 0.13), transparent 32%),
+    linear-gradient(180deg, #ffffff 0%, var(--paper) 100%);
 }
 
 .container {
@@ -103,13 +111,13 @@ select {
 
 .heroPanel {
   background: var(--road);
-  color: #fffdf4;
+  color: var(--white);
   min-height: 430px;
   padding: 28px;
   display: grid;
   align-content: space-between;
   border-radius: 8px;
-  box-shadow: 0 24px 80px rgba(23, 32, 27, 0.18);
+  box-shadow: 0 24px 80px rgba(11, 31, 75, 0.22);
 }
 
 .roadLines {
@@ -143,7 +151,7 @@ select {
   border-radius: 6px;
   border: 1px solid var(--road);
   background: var(--road);
-  color: white;
+  color: var(--white);
   font-family: "Trebuchet MS", sans-serif;
   font-weight: 700;
 }
@@ -198,7 +206,7 @@ select {
   width: fit-content;
   border-radius: 999px;
   padding: 5px 10px;
-  background: #e9f3ee;
+  background: var(--pale-green);
   color: var(--civic);
   font: 700 0.78rem "Trebuchet MS", sans-serif;
   text-transform: uppercase;
@@ -233,7 +241,7 @@ select {
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 12px;
-  background: white;
+  background: var(--white);
   color: var(--ink);
 }
 
@@ -244,7 +252,7 @@ select {
 }
 
 .notice {
-  background: #e9f3ee;
+  background: var(--pale-green);
   border-left: 4px solid var(--civic);
   color: var(--ink);
   padding: 12px 14px;
@@ -302,7 +310,7 @@ select {
 }
 
 .privatePanel {
-  background: #fff5e1;
+  background: var(--pale-saffron);
   border-left: 4px solid var(--signal);
   padding: 14px;
   font-family: "Trebuchet MS", sans-serif;

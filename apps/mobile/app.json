@@ -1,11 +1,23 @@
 {
   "expo": {
     "name": "Citizens First Pune",
-    "slug": "citizens-first-pune",
+    "slug": "pune-traffic-app",
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "citizensfirstpune",
     "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0"
+          }
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -15,6 +27,8 @@
       }
     },
     "android": {
+      "package": "com.citizensfirstpune.app",
+      "versionCode": 1,
       "permissions": [
         "CAMERA",
         "ACCESS_FINE_LOCATION",
@@ -24,6 +38,12 @@
       "adaptiveIcon": {
         "backgroundColor": "#f7f5ee"
       }
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3ace4c3e-9134-4eb1-a526-40fb1e2e4d15"
+      }
+    },
+    "owner": "abod-real-tech"
   }
 }

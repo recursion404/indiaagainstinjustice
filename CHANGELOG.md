@@ -1,5 +1,68 @@
 # Changelog
 
+## 2026-08-20 - Deployment and environment configuration
+
+- Updated public Supabase environment examples for the current Supabase project.
+- Updated project documentation to reference the current Supabase project URL.
+- Added Expo/EAS Android production build configuration for Play Store internal testing.
+- Added Android API level 35 build configuration through Expo build properties.
+- Added Firebase Hosting configuration files for the Expo web export workflow.
+- Added generated native Android/iOS build folders and local web build output paths to Git ignore rules.
+
+## 2026-08-20 - Brand color implementation
+
+- Updated the app theme to use the approved Pune Against Traffic Jams brand colors:
+  - Navy Blue `#0B1F4B` for authority, navigation and primary actions.
+  - Traffic Orange/Red `#F4511E` for errors and urgent states.
+  - White `#FFFFFF` for clarity and content surfaces.
+  - Green `#138A36` for solution, movement and positive states.
+  - Indian Saffron `#FF671F` as a selective accent.
+- Updated the website CSS variables to the same brand palette.
+- Replaced the earlier earth-tone/cream visual system with a navy-dominant civic identity.
+- Updated app inline success/error states to use the shared green and orange/red palette tokens.
+- Updated website hero panel, buttons, badges, notices, stats and private review panels to use the approved brand colors consistently.
+
+## 2026-08-20 - Traffic intelligence foundation
+
+- Added migration `0013_traffic_intelligence_foundation.sql` as the first implementation slice for the expanded Pune Against Traffic Jams specification.
+- Expanded the Supabase issue model with:
+  - full traffic issue category coverage from the new specification
+  - full workflow status coverage including verified, action started, action taken, duplicate, insufficient information and reopened
+  - severity values: low, moderate, high and critical
+  - traffic condition values: normal, moderate, heavy, severe and cleared
+  - controlled location type values: chowk, road, area and landmark
+  - citizen landmark wording, suggested solution, pincode and ward number
+  - confirmation and not-observed counters
+- Added foundational traffic intelligence tables:
+  - `traffic_locations` for the road/chowk master database
+  - `authorities` for assignable government/transport authorities
+  - `issue_confirmations` for one citizen confirmation or not-observed response per issue
+  - `traffic_observations` for historical traffic condition records
+  - `issue_assignments` for authority assignment tracking
+- Seeded initial authorities:
+  - Pune Traffic Police
+  - Pune Municipal Corporation
+  - PMRDA
+  - PMPML
+  - Other Government Department
+  - Joint Responsibility
+- Seeded starter traffic locations:
+  - Baner Radha Chowk
+  - Yashada Chowk
+  - Balewadi High Street
+  - Wakad Bridge
+- Added RLS policies for public active locations/authorities, admin management, issue confirmations and verified traffic observations.
+- Added confirmation counter triggers so issue-level confirmed/not-observed totals stay database-backed.
+- Updated shared TypeScript constants and types for expanded categories, workflow statuses, severity, traffic conditions, location kinds and confirmation counters.
+- Updated the app report flow to capture and submit severity, traffic condition, location type, location name, citizen landmark wording, suggested solution, pincode and ward number.
+- Updated the website report flow with the same expanded report fields.
+- Updated public issue data mapping to include condition, severity, location metadata, suggested solution and confirmation counters.
+- Added Confirm / Not observed actions on app issue cards and website public issue pages.
+- Updated admin moderation to show the expanded workflow status list and richer report details while keeping private reporter data separate from public pages.
+- Updated public issue and top-problems pages to display traffic condition, severity and reviewed location information.
+- Added the website `/live-traffic` page with reviewed public traffic reports, live/verified/severe counts, condition/severity display and confirmation/not-observed counters.
+- Added Live Traffic to website navigation, sitemap and homepage calls-to-action.
+
 ## 2026-08-16 - Admin role reconciliation
 
 - Added migration `0012_reconcile_initial_admin.sql` for the case where the initial admin migration ran before the requested account/profile existed.

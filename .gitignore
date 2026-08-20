@@ -74,6 +74,11 @@ web_modules/
 .expo/
 **/.expo/
 
+# Expo generated native projects and local build artifacts
+/apps/mobile/android/
+/apps/mobile/ios/
+/apps/mobile/builds/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

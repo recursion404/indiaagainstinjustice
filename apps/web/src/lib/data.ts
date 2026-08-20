@@ -1,11 +1,19 @@
-import type { IssueCategory, IssueStatus, PublicIssue } from "@citizens-first/shared";
+import { issueCategoryLabels, type IssueCategory, type IssueStatus, type PublicIssue } from "@citizens-first/shared";
 import { supabase } from "./supabase";
 
 export type WebsiteIssue = PublicIssue & {
+  trafficCondition: PublicIssue["trafficCondition"];
+  severity: PublicIssue["severity"];
+  locationName: string | null;
+  locationKind: PublicIssue["locationKind"];
+  suggestedSolution: string | null;
   isPublic: boolean;
   isSensitive: boolean;
   indexable: boolean;
   privateAddress: string | null;
+  citizenLandmark: string | null;
+  pincode: string | null;
+  wardNumber: string | null;
   authorityName: string | null;
   authorityReference: string | null;
   internalNotes: string | null;
@@ -14,7 +22,7 @@ export type WebsiteIssue = PublicIssue & {
 };
 
 const issueFields =
-  "id, public_id, reporter_id, title, slug, category, status, area, city, public_summary, private_address, support_count, share_count, is_public, is_sensitive, indexable, authority_name, authority_reference, internal_notes, rejection_reason, published_at, created_at, updated_at";
+  "id, public_id, reporter_id, title, slug, category, status, severity, traffic_condition, area, city, public_summary, location_name, location_kind, suggested_solution, citizen_landmark, private_address, pincode, ward_number, support_count, share_count, confirmation_count, not_observed_count, is_public, is_sensitive, indexable, authority_name, authority_reference, internal_notes, rejection_reason, published_at, created_at, updated_at";
 
 function mapIssue(row: Record<string, any>): WebsiteIssue {
   return {
@@ -24,16 +32,26 @@ function mapIssue(row: Record<string, any>): WebsiteIssue {
     slug: row.slug,
     category: row.category,
     status: row.status,
+    severity: row.severity,
+    trafficCondition: row.traffic_condition,
     area: row.area,
     city: row.city ?? "Pune",
     summary: row.public_summary,
+    locationName: row.location_name,
+    locationKind: row.location_kind,
+    suggestedSolution: row.suggested_solution,
     supportCount: row.support_count ?? 0,
     shareCount: row.share_count ?? 0,
+    confirmationCount: row.confirmation_count ?? 0,
+    notObservedCount: row.not_observed_count ?? 0,
     createdAt: row.created_at,
     isPublic: row.is_public,
     isSensitive: row.is_sensitive,
     indexable: row.indexable,
     privateAddress: row.private_address,
+    citizenLandmark: row.citizen_landmark,
+    pincode: row.pincode,
+    wardNumber: row.ward_number,
     authorityName: row.authority_name,
     authorityReference: row.authority_reference,
     internalNotes: row.internal_notes,
@@ -229,5 +247,5 @@ export async function saveContentPost(values: Record<string, any>, id?: string) 
 }
 
 export function categoryLabel(category: IssueCategory) {
-  return category.replaceAll("_", " ");
+  return issueCategoryLabels[category] ?? category.replaceAll("_", " ");
 }

@@ -39,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span>{siteConfig.tagline}</span>
             </Link>
             <nav className="nav" aria-label="Primary navigation">
+              <Link href="/live-traffic">Live Traffic</Link>
               <Link href="/report-traffic-problem">Report</Link>
               <Link href="/top-traffic-problems">Top Problems</Link>
               <Link href="/polls">Polls</Link>

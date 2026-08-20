@@ -4,6 +4,8 @@ import type { PublicIssue } from "@citizens-first/shared";
 import type { Session } from "@supabase/supabase-js";
 import { IssueCard } from "../components/IssueCard";
 import {
+  confirmIssueObservation,
+  fetchMyIssueConfirmations,
   fetchMySharedIssueIds,
   fetchMyIssues,
   fetchMySupportedIssueIds,
@@ -26,6 +28,7 @@ export function IssuesScreen({ onOpenProfile, session }: IssuesScreenProps) {
   const [query, setQuery] = useState("");
   const [supportedIds, setSupportedIds] = useState<string[]>([]);
   const [sharedIds, setSharedIds] = useState<string[]>([]);
+  const [confirmations, setConfirmations] = useState<Record<string, boolean>>({});
   const [issues, setIssues] = useState<PublicIssue[]>([]);
   const [statusText, setStatusText] = useState("Loading public issues from Supabase...");
 
@@ -35,8 +38,13 @@ export function IssuesScreen({ onOpenProfile, session }: IssuesScreenProps) {
     const userId = session?.user.id ?? null;
     const issueRequest = activeView === "mine" ? fetchMyIssues(userId) : fetchPublicIssues();
 
-    Promise.all([issueRequest, fetchMySupportedIssueIds(userId), fetchMySharedIssueIds(userId)])
-      .then(([nextIssues, nextSupportedIds, nextSharedIds]) => {
+    Promise.all([
+      issueRequest,
+      fetchMySupportedIssueIds(userId),
+      fetchMySharedIssueIds(userId),
+      fetchMyIssueConfirmations(userId)
+    ])
+      .then(([nextIssues, nextSupportedIds, nextSharedIds, nextConfirmations]) => {
         if (!isMounted) {
           return;
         }
@@ -44,6 +52,7 @@ export function IssuesScreen({ onOpenProfile, session }: IssuesScreenProps) {
         setIssues(nextIssues);
         setSupportedIds(nextSupportedIds);
         setSharedIds(nextSharedIds);
+        setConfirmations(nextConfirmations);
         setStatusText(
           getStatusText(activeView, nextIssues.length, Boolean(session))
         );
@@ -132,6 +141,44 @@ export function IssuesScreen({ onOpenProfile, session }: IssuesScreenProps) {
     }
   }
 
+  async function handleConfirm(issue: PublicIssue, observed: boolean) {
+    const previous = confirmations[issue.id];
+
+    try {
+      await confirmIssueObservation(issue.id, observed, session?.user.id ?? null);
+      setConfirmations((current) => ({ ...current, [issue.id]: observed }));
+      setIssues((currentIssues) =>
+        currentIssues.map((currentIssue) => {
+          if (currentIssue.id !== issue.id) {
+            return currentIssue;
+          }
+
+          const confirmationCount = currentIssue.confirmationCount ?? 0;
+          const notObservedCount = currentIssue.notObservedCount ?? 0;
+
+          return {
+            ...currentIssue,
+            confirmationCount:
+              observed && previous !== true
+                ? confirmationCount + 1
+                : !observed && previous === true
+                  ? Math.max(confirmationCount - 1, 0)
+                  : confirmationCount,
+            notObservedCount:
+              !observed && previous !== false
+                ? notObservedCount + 1
+                : observed && previous === false
+                  ? Math.max(notObservedCount - 1, 0)
+                  : notObservedCount
+          };
+        })
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to confirm issue.";
+      Alert.alert("Confirmation paused", message);
+    }
+  }
+
   return (
     <View style={styles.screen}>
       <Text style={styles.kicker}>Top problems</Text>
@@ -192,10 +239,13 @@ export function IssuesScreen({ onOpenProfile, session }: IssuesScreenProps) {
           const shared = sharedIds.includes(issue.id);
           return (
             <IssueCard
+              confirmation={confirmations[issue.id]}
               issue={issue}
               key={issue.id}
               shared={shared}
               supported={supported}
+              onConfirmNotObserved={() => handleConfirm(issue, false)}
+              onConfirmObserved={() => handleConfirm(issue, true)}
               onShare={() => handleShare(issue)}
               onSupport={() => handleSupport(issue)}
             />

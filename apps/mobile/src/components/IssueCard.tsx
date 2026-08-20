@@ -7,11 +7,23 @@ type IssueCardProps = {
   issue: PublicIssue;
   shared: boolean;
   supported: boolean;
+  confirmation?: boolean;
+  onConfirmObserved: () => void;
+  onConfirmNotObserved: () => void;
   onShare: () => void;
   onSupport: () => void;
 };
 
-export function IssueCard({ issue, shared, supported, onShare, onSupport }: IssueCardProps) {
+export function IssueCard({
+  issue,
+  shared,
+  supported,
+  confirmation,
+  onConfirmObserved,
+  onConfirmNotObserved,
+  onShare,
+  onSupport
+}: IssueCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.row}>
@@ -20,7 +32,30 @@ export function IssueCard({ issue, shared, supported, onShare, onSupport }: Issu
       </View>
       <Text style={styles.title}>{issue.title}</Text>
       <Text style={styles.area}>{issue.area}, Pune</Text>
+      <Text style={styles.meta}>
+        {(issue.trafficCondition ?? "heavy").replaceAll("_", " ")} traffic | {issue.severity ?? "moderate"} severity
+      </Text>
       <Text style={styles.summary}>{issue.summary}</Text>
+      <View style={styles.confirmRow}>
+        <Metric label="confirmed" value={issue.confirmationCount ?? 0} />
+        <Metric label="not observed" value={issue.notObservedCount ?? 0} />
+        <TouchableOpacity
+          style={[styles.secondaryButton, confirmation === true && styles.secondaryButtonSelected]}
+          onPress={onConfirmObserved}
+        >
+          <Text style={[styles.secondaryButtonText, confirmation === true && styles.selectedButtonText]}>
+            Confirm
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.secondaryButton, confirmation === false && styles.secondaryButtonSelected]}
+          onPress={onConfirmNotObserved}
+        >
+          <Text style={[styles.secondaryButtonText, confirmation === false && styles.selectedButtonText]}>
+            Not observed
+          </Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.footer}>
         <Metric label="supports" value={issue.supportCount} />
         <Metric label="shares" value={issue.shareCount} />
@@ -84,6 +119,12 @@ const styles = StyleSheet.create({
     color: colors.civic,
     fontWeight: "800"
   },
+  meta: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase"
+  },
   summary: {
     color: colors.muted,
     fontSize: 15,
@@ -95,6 +136,12 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.md,
     marginTop: spacing.xs
+  },
+  confirmRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md
   },
   button: {
     alignItems: "center",

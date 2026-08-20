@@ -1,4 +1,4 @@
-import type { IssueCategory, PublicIssue } from "@citizens-first/shared";
+import { issueCategoryLabels, issueCategories, type IssueCategory, type PublicIssue } from "@citizens-first/shared";
 
 export const sampleIssues: PublicIssue[] = [
   {
@@ -46,9 +46,5 @@ export const sampleIssues: PublicIssue[] = [
 ];
 
 export const quickCategories: Array<{ label: string; value: IssueCategory }> = [
-  { label: "Traffic jam", value: "traffic_jam" },
-  { label: "Road problem", value: "road_damage" },
-  { label: "Signal issue", value: "signal_issue" },
-  { label: "Illegal parking", value: "illegal_parking" },
-  { label: "Public transport", value: "public_transport" }
+  ...issueCategories.map((value) => ({ label: issueCategoryLabels[value], value }))
 ];

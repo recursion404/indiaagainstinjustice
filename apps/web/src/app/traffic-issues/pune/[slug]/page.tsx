@@ -42,6 +42,7 @@ export default async function PublicIssuePage({ params }: PageProps) {
     name: issue.title,
     identifier: issue.publicId,
     about: issue.category,
+    severity: issue.severity,
     areaServed: {
       "@type": "City",
       name: "Pune"
@@ -57,12 +58,29 @@ export default async function PublicIssuePage({ params }: PageProps) {
       <span className="status">{issue.status.replaceAll("_", " ")}</span>
       <h1>{issue.title}</h1>
       <p className="issueMeta muted">
-        <MapPin size={16} /> {issue.area}, {issue.city} | {issue.publicId}
+        <MapPin size={16} /> {issue.locationName || issue.area}, {issue.city} | {issue.publicId}
       </p>
       <section className="card">
         <h2>Public Summary</h2>
-          <p>{issue.summary}</p>
-          <IssueEngagement issueId={issue.id} initialSupportCount={issue.supportCount} initialShareCount={issue.shareCount} />
+        <p>{issue.summary}</p>
+        <div className="stats">
+          <div className="stat"><strong>{issue.trafficCondition ?? "heavy"}</strong><span>traffic condition</span></div>
+          <div className="stat"><strong>{issue.severity ?? "moderate"}</strong><span>severity</span></div>
+          <div className="stat"><strong>{issue.locationKind ?? "area"}</strong><span>location type</span></div>
+        </div>
+        {issue.suggestedSolution ? (
+          <div className="privatePanel">
+            <strong>Citizen suggested solution</strong>
+            <p>{issue.suggestedSolution}</p>
+          </div>
+        ) : null}
+        <IssueEngagement
+          issueId={issue.id}
+          initialConfirmationCount={issue.confirmationCount ?? 0}
+          initialNotObservedCount={issue.notObservedCount ?? 0}
+          initialShareCount={issue.shareCount}
+          initialSupportCount={issue.supportCount}
+        />
       </section>
       <section className="band">
         <h2>Public action record</h2>

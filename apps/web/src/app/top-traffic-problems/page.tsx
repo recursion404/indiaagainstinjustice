@@ -22,7 +22,8 @@ export default async function TopTrafficProblemsPage() {
           <article className="card" key={issue.id}>
             <span className="status">{issue.status.replaceAll("_", " ")}</span>
             <h2>{issue.title}</h2>
-            <p className="muted">{issue.area}, {issue.city} · {categoryLabel(issue.category)}</p>
+            <p className="muted">{issue.locationName || issue.area}, {issue.city} · {categoryLabel(issue.category)}</p>
+            <p className="status">{issue.trafficCondition ?? "heavy"} traffic · {issue.severity ?? "moderate"} severity</p>
             <p>{issue.summary}</p>
             <div className="stats">
               <div className="stat"><strong>{issue.supportCount}</strong><span>supports</span></div>

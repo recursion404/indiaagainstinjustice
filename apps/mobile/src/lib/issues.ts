@@ -1,4 +1,10 @@
-import type { IssueCategory, PublicIssue } from "@citizens-first/shared";
+import type {
+  IssueCategory,
+  IssueSeverity,
+  LocationKind,
+  PublicIssue,
+  TrafficCondition
+} from "@citizens-first/shared";
 import { supabase } from "./supabase";
 import { makePublicId, makeSlug } from "./slug";
 
@@ -12,8 +18,16 @@ export type IssueDraft = {
   title: string;
   area: string;
   category: IssueCategory;
+  severity: IssueSeverity;
+  trafficCondition: TrafficCondition;
   publicSummary: string;
+  locationName?: string;
+  locationKind?: LocationKind;
+  citizenLandmark?: string;
+  suggestedSolution?: string;
   privateAddress?: string;
+  pincode?: string;
+  wardNumber?: string;
   latitude?: number;
   longitude?: number;
   photo?: IssuePhotoDraft | null;
@@ -35,9 +49,17 @@ export async function submitTrafficIssue(draft: IssueDraft, userId: string | nul
       title: draft.title.trim(),
       slug,
       category: draft.category,
+      severity: draft.severity,
+      traffic_condition: draft.trafficCondition,
       area: draft.area.trim(),
       public_summary: draft.publicSummary.trim(),
+      location_name: draft.locationName?.trim() || draft.area.trim(),
+      location_kind: draft.locationKind ?? "area",
+      citizen_landmark: draft.citizenLandmark?.trim() || null,
+      suggested_solution: draft.suggestedSolution?.trim() || null,
       private_address: draft.privateAddress?.trim() || null,
+      pincode: draft.pincode?.trim() || null,
+      ward_number: draft.wardNumber?.trim() || null,
       latitude: draft.latitude ?? null,
       longitude: draft.longitude ?? null
     })
@@ -64,7 +86,7 @@ export async function fetchPublicIssues(): Promise<PublicIssue[]> {
   const { data, error } = await supabase
     .from("traffic_issues")
     .select(
-      "id, public_id, title, slug, category, status, area, city, public_summary, support_count, share_count, created_at"
+      "id, public_id, title, slug, category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, confirmation_count, not_observed_count, created_at"
     )
     .eq("is_public", true)
     .eq("is_sensitive", false)
@@ -83,11 +105,15 @@ export async function fetchPublicIssues(): Promise<PublicIssue[]> {
     slug: issue.slug,
     category: issue.category,
     status: issue.status,
+    severity: issue.severity,
+    trafficCondition: issue.traffic_condition,
     area: issue.area,
     city: "Pune",
     summary: issue.public_summary,
     supportCount: issue.support_count,
     shareCount: issue.share_count,
+    confirmationCount: issue.confirmation_count ?? 0,
+    notObservedCount: issue.not_observed_count ?? 0,
     createdAt: issue.created_at
   }));
 }
@@ -134,7 +160,7 @@ export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[
   const { data, error } = await supabase
     .from("traffic_issues")
     .select(
-      "id, public_id, title, slug, category, status, area, city, public_summary, support_count, share_count, created_at"
+      "id, public_id, title, slug, category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, confirmation_count, not_observed_count, created_at"
     )
     .eq("reporter_id", userId)
     .order("created_at", { ascending: false })
@@ -151,13 +177,53 @@ export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[
     slug: issue.slug,
     category: issue.category,
     status: issue.status,
+    severity: issue.severity,
+    trafficCondition: issue.traffic_condition,
     area: issue.area,
     city: "Pune",
     summary: issue.public_summary,
     supportCount: issue.support_count,
     shareCount: issue.share_count,
+    confirmationCount: issue.confirmation_count ?? 0,
+    notObservedCount: issue.not_observed_count ?? 0,
     createdAt: issue.created_at
   }));
+}
+
+export async function fetchMyIssueConfirmations(userId: string | null) {
+  if (!userId) {
+    return {};
+  }
+
+  const { data, error } = await supabase
+    .from("issue_confirmations")
+    .select("issue_id, observed")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return Object.fromEntries((data ?? []).map((row) => [row.issue_id as string, Boolean(row.observed)]));
+}
+
+export async function confirmIssueObservation(issueId: string, observed: boolean, userId: string | null) {
+  if (!userId) {
+    throw new Error("Please sign in before confirming traffic conditions.");
+  }
+
+  const { error } = await supabase.from("issue_confirmations").upsert(
+    {
+      issue_id: issueId,
+      user_id: userId,
+      observed
+    },
+    { onConflict: "issue_id,user_id" }
+  );
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function supportIssue(issueId: string, userId: string | null) {

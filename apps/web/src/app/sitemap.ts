@@ -5,6 +5,7 @@ import { getPublicIssues } from "@/lib/data";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     "",
+    "/live-traffic",
     "/report-traffic-problem",
     "/top-traffic-problems",
     "/volunteer",

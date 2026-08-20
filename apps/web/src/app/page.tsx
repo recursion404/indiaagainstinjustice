@@ -21,8 +21,8 @@ export default async function HomePage() {
             <Link className="button" href="/report-traffic-problem">
               Report a problem <ArrowRight size={18} />
             </Link>
-            <Link className="button secondary" href="/top-traffic-problems">
-              See top issues
+            <Link className="button secondary" href="/live-traffic">
+              View live traffic
             </Link>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import type { IssueCategory } from "@citizens-first/shared";
+import type { IssueCategory, IssueSeverity, LocationKind, TrafficCondition } from "@citizens-first/shared";
 import type { Session } from "@supabase/supabase-js";
 import { quickCategories } from "../data/sample";
 import type { IssuePhotoDraft } from "../lib/issues";
@@ -18,8 +18,16 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
   const [title, setTitle] = useState("");
   const [area, setArea] = useState("");
   const [category, setCategory] = useState<IssueCategory>("traffic_jam");
+  const [severity, setSeverity] = useState<IssueSeverity>("moderate");
+  const [trafficCondition, setTrafficCondition] = useState<TrafficCondition>("heavy");
+  const [locationKind, setLocationKind] = useState<LocationKind>("area");
+  const [locationName, setLocationName] = useState("");
   const [publicSummary, setPublicSummary] = useState("");
+  const [suggestedSolution, setSuggestedSolution] = useState("");
+  const [citizenLandmark, setCitizenLandmark] = useState("");
   const [privateAddress, setPrivateAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [wardNumber, setWardNumber] = useState("");
   const [photo, setPhoto] = useState<IssuePhotoDraft | null>(null);
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,16 +120,32 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
         title,
         area,
         category,
+        severity,
+        trafficCondition,
+        locationKind,
+        locationName,
         publicSummary,
+        suggestedSolution,
+        citizenLandmark,
         privateAddress,
+        pincode,
+        wardNumber,
         latitude: location?.latitude,
         longitude: location?.longitude,
         photo
       }, session.user.id);
       setTitle("");
       setArea("");
+      setSeverity("moderate");
+      setTrafficCondition("heavy");
+      setLocationKind("area");
+      setLocationName("");
       setPublicSummary("");
+      setSuggestedSolution("");
+      setCitizenLandmark("");
       setPrivateAddress("");
+      setPincode("");
+      setWardNumber("");
       setPhoto(null);
       setLocation(null);
       setStatusKind("success");
@@ -170,6 +194,32 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           value={area}
         />
 
+        <Text style={styles.label}>Location type</Text>
+        <View style={styles.chips}>
+          {(["chowk", "road", "area", "landmark"] as LocationKind[]).map((item) => {
+            const selected = item === locationKind;
+            return (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setLocationKind(item)}
+                style={[styles.chip, selected && styles.chipSelected]}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <Text style={styles.label}>Location name</Text>
+        <TextInput
+          onChangeText={setLocationName}
+          placeholder="Baner Radha Chowk, Wakad Bridge..."
+          style={styles.input}
+          value={locationName}
+        />
+
         <Text style={styles.label}>Category</Text>
         <View style={styles.chips}>
           {quickCategories.map((item) => {
@@ -188,6 +238,42 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           })}
         </View>
 
+        <Text style={styles.label}>Traffic condition</Text>
+        <View style={styles.chips}>
+          {(["normal", "moderate", "heavy", "severe", "cleared"] as TrafficCondition[]).map((item) => {
+            const selected = item === trafficCondition;
+            return (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setTrafficCondition(item)}
+                style={[styles.chip, selected && styles.chipSelected]}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                  {item.replaceAll("_", " ")}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <Text style={styles.label}>Severity</Text>
+        <View style={styles.chips}>
+          {(["low", "moderate", "high", "critical"] as IssueSeverity[]).map((item) => {
+            const selected = item === severity;
+            return (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setSeverity(item)}
+                style={[styles.chip, selected && styles.chipSelected]}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
         <Text style={styles.label}>Public summary</Text>
         <TextInput
           multiline
@@ -198,12 +284,47 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           value={publicSummary}
         />
 
+        <Text style={styles.label}>Suggested solution</Text>
+        <TextInput
+          multiline
+          onChangeText={setSuggestedSolution}
+          placeholder="Optional: change signal timing, remove illegal parking, open alternate road..."
+          style={[styles.input, styles.textareaSmall]}
+          textAlignVertical="top"
+          value={suggestedSolution}
+        />
+
+        <Text style={styles.label}>Citizen landmark wording</Text>
+        <TextInput
+          onChangeText={setCitizenLandmark}
+          placeholder="In front of XYZ Society"
+          style={styles.input}
+          value={citizenLandmark}
+        />
+
         <Text style={styles.label}>Private address or landmark</Text>
         <TextInput
           onChangeText={setPrivateAddress}
           placeholder="Optional, not shown publicly"
           style={styles.input}
           value={privateAddress}
+        />
+
+        <Text style={styles.label}>Pincode</Text>
+        <TextInput
+          keyboardType="number-pad"
+          onChangeText={setPincode}
+          placeholder="Optional"
+          style={styles.input}
+          value={pincode}
+        />
+
+        <Text style={styles.label}>Ward number</Text>
+        <TextInput
+          onChangeText={setWardNumber}
+          placeholder="Optional"
+          style={styles.input}
+          value={wardNumber}
         />
 
         <View style={styles.mediaRow}>
@@ -283,6 +404,10 @@ const styles = StyleSheet.create({
     minHeight: 112,
     paddingTop: 12
   },
+  textareaSmall: {
+    minHeight: 82,
+    paddingTop: 12
+  },
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -354,10 +479,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paleGreen
   },
   success: {
-    backgroundColor: "#dff3e6"
+    backgroundColor: colors.paleGreen
   },
   error: {
-    backgroundColor: "#f8e3df"
+    backgroundColor: colors.paleAlert
   },
   noticeText: {
     color: colors.ink,

@@ -293,10 +293,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paleGreen
   },
   success: {
-    backgroundColor: "#dff3e6"
+    backgroundColor: colors.paleGreen
   },
   error: {
-    backgroundColor: "#f8e3df"
+    backgroundColor: colors.paleAlert
   },
   noticeText: {
     color: colors.ink,

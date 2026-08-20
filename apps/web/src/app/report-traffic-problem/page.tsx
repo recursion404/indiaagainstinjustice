@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import {
+  issueCategories,
+  issueCategoryLabels,
+  type IssueSeverity,
+  type LocationKind,
+  type TrafficCondition
+} from "@citizens-first/shared";
 import { supabase } from "@/lib/supabase";
 
-const categories = [
-  ["traffic_jam", "Traffic jam"],
-  ["road_damage", "Road problem"],
-  ["signal_issue", "Signal issue"],
-  ["illegal_parking", "Illegal parking"],
-  ["public_transport", "Public transport"],
-  ["unsafe_junction", "Unsafe junction"],
-  ["other", "Other"]
-];
+const categories = issueCategories.map((value) => [value, issueCategoryLabels[value]] as const);
 
 function makePublicId() {
   return `PUN-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -30,9 +29,17 @@ export default function ReportTrafficProblemPage() {
   const [password, setPassword] = useState("");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("traffic_jam");
+  const [severity, setSeverity] = useState<IssueSeverity>("moderate");
+  const [trafficCondition, setTrafficCondition] = useState<TrafficCondition>("heavy");
+  const [locationKind, setLocationKind] = useState<LocationKind>("area");
+  const [locationName, setLocationName] = useState("");
   const [area, setArea] = useState("");
   const [summary, setSummary] = useState("");
+  const [suggestedSolution, setSuggestedSolution] = useState("");
+  const [citizenLandmark, setCitizenLandmark] = useState("");
   const [privateAddress, setPrivateAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [wardNumber, setWardNumber] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [message, setMessage] = useState("Sign in or create an account before submitting a report.");
@@ -99,9 +106,17 @@ export default function ReportTrafficProblemPage() {
         title: title.trim(),
         slug,
         category,
+        severity,
+        traffic_condition: trafficCondition,
         area: area.trim(),
         public_summary: summary.trim(),
+        location_name: locationName.trim() || area.trim(),
+        location_kind: locationKind,
+        citizen_landmark: citizenLandmark.trim() || null,
+        suggested_solution: suggestedSolution.trim() || null,
         private_address: privateAddress.trim() || null,
+        pincode: pincode.trim() || null,
+        ward_number: wardNumber.trim() || null,
         latitude: coordinates?.latitude ?? null,
         longitude: coordinates?.longitude ?? null
       }).select("id, public_id").single();
@@ -116,6 +131,8 @@ export default function ReportTrafficProblemPage() {
       }
       setMessage(`Report ${issue.public_id} submitted for review. It is private until an admin verifies it.`);
       setTitle(""); setArea(""); setSummary(""); setPrivateAddress(""); setPhoto(null); setCoordinates(null);
+      setSeverity("moderate"); setTrafficCondition("heavy"); setLocationKind("area"); setLocationName("");
+      setSuggestedSolution(""); setCitizenLandmark(""); setPincode(""); setWardNumber("");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to submit report.");
     } finally {
@@ -140,9 +157,17 @@ export default function ReportTrafficProblemPage() {
           <p className="status">Signed in as {session.user.email}</p>
           <label className="field">Problem title<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Heavy traffic near Baner main road" /></label>
           <label className="field">Category<select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label className="field">Traffic condition<select value={trafficCondition} onChange={(event) => setTrafficCondition(event.target.value as TrafficCondition)}><option value="normal">Normal</option><option value="moderate">Moderate</option><option value="heavy">Heavy</option><option value="severe">Severe</option><option value="cleared">Cleared</option></select></label>
+          <label className="field">Severity<select value={severity} onChange={(event) => setSeverity(event.target.value as IssueSeverity)}><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option><option value="critical">Critical</option></select></label>
           <label className="field">Area<input value={area} onChange={(event) => setArea(event.target.value)} placeholder="Baner, Wakad, Hinjewadi..." /></label>
+          <label className="field">Location type<select value={locationKind} onChange={(event) => setLocationKind(event.target.value as LocationKind)}><option value="chowk">Chowk</option><option value="road">Road</option><option value="area">Area</option><option value="landmark">Landmark</option></select></label>
+          <label className="field">Location name<input value={locationName} onChange={(event) => setLocationName(event.target.value)} placeholder="Baner Radha Chowk, Wakad Bridge..." /></label>
           <label className="field">Public summary<textarea rows={5} value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Describe what citizens should know publicly." /></label>
+          <label className="field">Suggested solution<textarea rows={3} value={suggestedSolution} onChange={(event) => setSuggestedSolution(event.target.value)} placeholder="Optional: change signal timing, remove illegal parking, open alternate road..." /></label>
+          <label className="field">Citizen landmark wording<input value={citizenLandmark} onChange={(event) => setCitizenLandmark(event.target.value)} placeholder="In front of XYZ Society" /></label>
           <label className="field">Private address or landmark<input value={privateAddress} onChange={(event) => setPrivateAddress(event.target.value)} placeholder="Optional, never shown publicly" /></label>
+          <label className="field">Pincode<input value={pincode} onChange={(event) => setPincode(event.target.value)} placeholder="Optional" /></label>
+          <label className="field">Ward number<input value={wardNumber} onChange={(event) => setWardNumber(event.target.value)} placeholder="Optional" /></label>
           <label className="field">Photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setPhoto(event.target.files?.[0] ?? null)} /></label>
           <div className="actions"><button className="button secondary" type="button" onClick={useLocation}>Use my location</button><button className="button" type="button" disabled={busy} onClick={submitReport}>{busy ? "Submitting..." : "Submit report"}</button></div>
         </section>
