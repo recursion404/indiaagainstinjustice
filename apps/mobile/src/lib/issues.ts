@@ -18,14 +18,13 @@ export type IssueDraft = {
   title: string;
   area: string;
   category: IssueCategory;
+  customCategory?: string;
   severity: IssueSeverity;
   trafficCondition: TrafficCondition;
-  publicSummary: string;
+  publicSummary?: string;
   locationName?: string;
   locationKind?: LocationKind;
-  citizenLandmark?: string;
   suggestedSolution?: string;
-  privateAddress?: string;
   pincode?: string;
   wardNumber?: string;
   latitude?: number;
@@ -34,59 +33,52 @@ export type IssueDraft = {
 };
 
 export async function submitTrafficIssue(draft: IssueDraft, userId: string | null) {
-  if (!userId) {
-    throw new Error("Please sign in before submitting a traffic report.");
-  }
-
   const publicId = makePublicId();
   const slug = makeSlug([draft.area, draft.title, publicId]);
 
-  const { data, error } = await supabase
-    .from("traffic_issues")
-    .insert({
-      public_id: publicId,
-      reporter_id: userId,
-      title: draft.title.trim(),
-      slug,
-      category: draft.category,
-      severity: draft.severity,
-      traffic_condition: draft.trafficCondition,
-      area: draft.area.trim(),
-      public_summary: draft.publicSummary.trim(),
-      location_name: draft.locationName?.trim() || draft.area.trim(),
-      location_kind: draft.locationKind ?? "area",
-      citizen_landmark: draft.citizenLandmark?.trim() || null,
-      suggested_solution: draft.suggestedSolution?.trim() || null,
-      private_address: draft.privateAddress?.trim() || null,
-      pincode: draft.pincode?.trim() || null,
-      ward_number: draft.wardNumber?.trim() || null,
-      latitude: draft.latitude ?? null,
-      longitude: draft.longitude ?? null
-    })
-    .select("id, public_id")
-    .single();
+  const { data, error } = await supabase.rpc("submit_traffic_issue", {
+    p_public_id:          publicId,
+    p_reporter_id:        userId ?? null,
+    p_title:              draft.title.trim(),
+    p_slug:               slug,
+    p_category:           draft.category,
+    p_custom_category:    draft.customCategory?.trim() || null,
+    p_traffic_condition:  draft.trafficCondition,
+    p_area:               draft.area.trim(),
+    p_public_summary:     draft.publicSummary?.trim() || "",
+    p_location_name:      draft.locationName?.trim() || draft.area.trim(),
+    p_location_kind:      draft.locationKind ?? "area",
+    p_suggested_solution: draft.suggestedSolution?.trim() || null,
+    p_pincode:            draft.pincode?.trim() || null,
+    p_ward_number:        draft.wardNumber?.trim() || null,
+    p_latitude:           draft.latitude ?? null,
+    p_longitude:          draft.longitude ?? null
+  });
 
   if (error) {
     throw error;
   }
 
+  const row = (data as Array<{ id: string; public_id: string }>)[0];
+
   if (draft.photo) {
     await uploadIssuePhoto({
-      issueId: data.id,
-      publicId: data.public_id,
+      issueId: row.id,
+      publicId: row.public_id,
       photo: draft.photo,
       userId
     });
   }
 
-  return data;
+  return row;
 }
+
 
 export async function fetchPublicIssues(): Promise<PublicIssue[]> {
   const { data, error } = await supabase
     .from("traffic_issues")
     .select(
-      "id, public_id, title, slug, category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, confirmation_count, not_observed_count, created_at"
+      "id, public_id, title, slug, category, custom_category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, comment_count, confirmation_count, not_observed_count, created_at"
     )
     .eq("is_public", true)
     .eq("is_sensitive", false)
@@ -104,6 +96,7 @@ export async function fetchPublicIssues(): Promise<PublicIssue[]> {
     title: issue.title,
     slug: issue.slug,
     category: issue.category,
+    customCategory: issue.custom_category,
     status: issue.status,
     severity: issue.severity,
     trafficCondition: issue.traffic_condition,
@@ -112,6 +105,7 @@ export async function fetchPublicIssues(): Promise<PublicIssue[]> {
     summary: issue.public_summary,
     supportCount: issue.support_count,
     shareCount: issue.share_count,
+    commentCount: issue.comment_count ?? 0,
     confirmationCount: issue.confirmation_count ?? 0,
     notObservedCount: issue.not_observed_count ?? 0,
     createdAt: issue.created_at
@@ -160,7 +154,7 @@ export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[
   const { data, error } = await supabase
     .from("traffic_issues")
     .select(
-      "id, public_id, title, slug, category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, confirmation_count, not_observed_count, created_at"
+      "id, public_id, title, slug, category, custom_category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, comment_count, confirmation_count, not_observed_count, created_at"
     )
     .eq("reporter_id", userId)
     .order("created_at", { ascending: false })
@@ -176,6 +170,7 @@ export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[
     title: issue.title,
     slug: issue.slug,
     category: issue.category,
+    customCategory: issue.custom_category,
     status: issue.status,
     severity: issue.severity,
     trafficCondition: issue.traffic_condition,
@@ -184,6 +179,7 @@ export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[
     summary: issue.public_summary,
     supportCount: issue.support_count,
     shareCount: issue.share_count,
+    commentCount: issue.comment_count ?? 0,
     confirmationCount: issue.confirmation_count ?? 0,
     notObservedCount: issue.not_observed_count ?? 0,
     createdAt: issue.created_at
@@ -285,7 +281,7 @@ type UploadIssuePhotoInput = {
   issueId: string;
   publicId: string;
   photo: IssuePhotoDraft;
-  userId: string;
+  userId: string | null;
 };
 
 async function uploadIssuePhoto({ issueId, publicId, photo, userId }: UploadIssuePhotoInput) {
@@ -294,7 +290,8 @@ async function uploadIssuePhoto({ issueId, publicId, photo, userId }: UploadIssu
   const contentType = photo.mimeType ?? "image/jpeg";
   const extension = contentType.split("/")[1] ?? "jpg";
   const safeName = photo.fileName?.replace(/[^a-zA-Z0-9._-]/g, "-") ?? `${publicId}.${extension}`;
-  const storagePath = `${userId}/${issueId}/${Date.now()}-${safeName}`;
+  const folder = userId || "anonymous";
+  const storagePath = `${folder}/${issueId}/${Date.now()}-${safeName}`;
 
   const { error: uploadError } = await supabase.storage
     .from("issue-photos")
@@ -317,4 +314,82 @@ async function uploadIssuePhoto({ issueId, publicId, photo, userId }: UploadIssu
   if (photoError) {
     throw photoError;
   }
+}
+
+export type IssueComment = {
+  id: string;
+  issueId: string;
+  userId: string | null;
+  authorName: string;
+  body: string;
+  createdAt: string;
+};
+
+export async function fetchIssueComments(issueId: string): Promise<IssueComment[]> {
+  const { data, error } = await supabase
+    .from("issue_comments")
+    .select(`
+      id,
+      issue_id,
+      user_id,
+      author_name,
+      body,
+      created_at,
+      profiles:user_id (full_name)
+    `)
+    .eq("issue_id", issueId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    issueId: row.issue_id,
+    userId: row.user_id,
+    authorName: row.profiles?.full_name || row.author_name || "Anonymous Citizen",
+    body: row.body,
+    createdAt: row.created_at
+  }));
+}
+
+export async function postIssueComment(
+  issueId: string,
+  body: string,
+  authorName: string | null,
+  userId: string | null
+): Promise<IssueComment> {
+  const { data, error } = await supabase
+    .from("issue_comments")
+    .insert({
+      issue_id: issueId,
+      user_id: userId,
+      author_name: authorName?.trim() || null,
+      body: body.trim()
+    })
+    .select(`
+      id,
+      issue_id,
+      user_id,
+      author_name,
+      body,
+      created_at,
+      profiles:user_id (full_name)
+    `)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const row = data as any;
+  return {
+    id: row.id,
+    issueId: row.issue_id,
+    userId: row.user_id,
+    authorName: row.profiles?.full_name || row.author_name || "Anonymous Citizen",
+    body: row.body,
+    createdAt: row.created_at
+  };
 }

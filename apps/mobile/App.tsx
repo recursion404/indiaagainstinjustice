@@ -13,11 +13,11 @@ import { colors, spacing } from "./src/theme";
 type Tab = "report" | "issues" | "polls" | "pledge" | "profile";
 
 const tabs: Array<{ label: string; value: Tab }> = [
-  { label: "Report", value: "report" },
-  { label: "Issues", value: "issues" },
+  { label: "Report Traffic", value: "report" },
+  { label: "Issue List", value: "issues" },
   { label: "Polls", value: "polls" },
-  { label: "Pledge", value: "pledge" },
-  { label: "Profile", value: "profile" }
+  { label: "My Pledge", value: "pledge" },
+  { label: "My Profile", value: "profile" }
 ];
 
 export default function App() {

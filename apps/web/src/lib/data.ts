@@ -7,6 +7,7 @@ export type WebsiteIssue = PublicIssue & {
   locationName: string | null;
   locationKind: PublicIssue["locationKind"];
   suggestedSolution: string | null;
+  customCategory: string | null;
   isPublic: boolean;
   isSensitive: boolean;
   indexable: boolean;
@@ -22,7 +23,7 @@ export type WebsiteIssue = PublicIssue & {
 };
 
 const issueFields =
-  "id, public_id, reporter_id, title, slug, category, status, severity, traffic_condition, area, city, public_summary, location_name, location_kind, suggested_solution, citizen_landmark, private_address, pincode, ward_number, support_count, share_count, confirmation_count, not_observed_count, is_public, is_sensitive, indexable, authority_name, authority_reference, internal_notes, rejection_reason, published_at, created_at, updated_at";
+  "id, public_id, reporter_id, title, slug, category, custom_category, status, severity, traffic_condition, area, city, public_summary, location_name, location_kind, suggested_solution, citizen_landmark, private_address, pincode, ward_number, support_count, share_count, confirmation_count, not_observed_count, comment_count, is_public, is_sensitive, indexable, authority_name, authority_reference, internal_notes, rejection_reason, published_at, created_at, updated_at";
 
 function mapIssue(row: Record<string, any>): WebsiteIssue {
   return {
@@ -31,6 +32,7 @@ function mapIssue(row: Record<string, any>): WebsiteIssue {
     title: row.title,
     slug: row.slug,
     category: row.category,
+    customCategory: row.custom_category ?? null,
     status: row.status,
     severity: row.severity,
     trafficCondition: row.traffic_condition,
@@ -44,6 +46,7 @@ function mapIssue(row: Record<string, any>): WebsiteIssue {
     shareCount: row.share_count ?? 0,
     confirmationCount: row.confirmation_count ?? 0,
     notObservedCount: row.not_observed_count ?? 0,
+    commentCount: row.comment_count ?? 0,
     createdAt: row.created_at,
     isPublic: row.is_public,
     isSensitive: row.is_sensitive,
@@ -110,6 +113,25 @@ export async function getPublicPolls() {
 
   if (error) throw error;
   return data ?? [];
+}
+
+export async function createPoll(question: string, optionLabels: string[], userId: string) {
+  const slug = question.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const { data: poll, error: pollError } = await supabase
+    .from("polls")
+    .insert({ question: question.trim(), slug, creator_id: userId, is_public: false })
+    .select("id")
+    .single();
+  if (pollError) throw pollError;
+
+  const options = optionLabels.map((label, idx) => ({
+    poll_id: poll.id,
+    label: label.trim(),
+    sort_order: idx
+  }));
+  const { error: optionsError } = await supabase.from("poll_options").insert(options);
+  if (optionsError) throw optionsError;
+  return poll;
 }
 
 export async function getPledgeCount() {

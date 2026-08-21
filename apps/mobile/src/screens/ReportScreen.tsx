@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import type { IssueCategory, IssueSeverity, LocationKind, TrafficCondition } from "@citizens-first/shared";
+import type { IssueCategory, LocationKind, TrafficCondition } from "@citizens-first/shared";
 import type { Session } from "@supabase/supabase-js";
 import { quickCategories } from "../data/sample";
 import type { IssuePhotoDraft } from "../lib/issues";
@@ -17,22 +17,20 @@ type ReportScreenProps = {
 export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
   const [title, setTitle] = useState("");
   const [area, setArea] = useState("");
-  const [category, setCategory] = useState<IssueCategory>("traffic_jam");
-  const [severity, setSeverity] = useState<IssueSeverity>("moderate");
+  const [category, setCategory] = useState<IssueCategory>("road_work");
+  const [customCategory, setCustomCategory] = useState("");
   const [trafficCondition, setTrafficCondition] = useState<TrafficCondition>("heavy");
   const [locationKind, setLocationKind] = useState<LocationKind>("area");
   const [locationName, setLocationName] = useState("");
   const [publicSummary, setPublicSummary] = useState("");
   const [suggestedSolution, setSuggestedSolution] = useState("");
-  const [citizenLandmark, setCitizenLandmark] = useState("");
-  const [privateAddress, setPrivateAddress] = useState("");
   const [pincode, setPincode] = useState("");
   const [wardNumber, setWardNumber] = useState("");
   const [photo, setPhoto] = useState<IssuePhotoDraft | null>(null);
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(
-    "Sign in from Profile before submitting a real report."
+    session ? "Fill in the fields to submit a traffic report." : "You are submitting anonymously. Sign in from Profile to track your reports."
   );
   const [statusKind, setStatusKind] = useState<"info" | "success" | "error">("info");
 
@@ -99,16 +97,17 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
   }
 
   async function handleSubmit() {
-    if (!title.trim() || !area.trim() || !publicSummary.trim()) {
+    if (!title.trim() || !area.trim()) {
       setStatusKind("error");
-      setStatusMessage("Add a title, area and public summary first.");
-      Alert.alert("Missing details", "Add a title, area and public summary first.");
+      setStatusMessage("Add a title and area first.");
+      Alert.alert("Missing details", "Add a title and area first.");
       return;
     }
 
-    if (!session) {
+    if (!pincode.trim()) {
       setStatusKind("error");
-      setStatusMessage("Please sign in from Profile before submitting a report.");
+      setStatusMessage("Pincode is mandatory.");
+      Alert.alert("Missing details", "Pincode is mandatory.");
       return;
     }
 
@@ -120,36 +119,35 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
         title,
         area,
         category,
-        severity,
+        customCategory: category === "other" ? customCategory : undefined,
+        severity: "moderate",
         trafficCondition,
         locationKind,
         locationName,
         publicSummary,
         suggestedSolution,
-        citizenLandmark,
-        privateAddress,
         pincode,
         wardNumber,
         latitude: location?.latitude,
         longitude: location?.longitude,
         photo
-      }, session.user.id);
+      }, session?.user.id ?? null);
       setTitle("");
       setArea("");
-      setSeverity("moderate");
+      setCustomCategory("");
       setTrafficCondition("heavy");
       setLocationKind("area");
       setLocationName("");
       setPublicSummary("");
       setSuggestedSolution("");
-      setCitizenLandmark("");
-      setPrivateAddress("");
       setPincode("");
       setWardNumber("");
       setPhoto(null);
       setLocation(null);
       setStatusKind("success");
-      setStatusMessage(`Report ${submittedIssue.public_id} saved for review.`);
+      const successMessage = `Report ${submittedIssue.public_id} saved for review. It is private until an admin verifies it.`;
+      setStatusMessage(successMessage);
+      Alert.alert("Report Submitted", successMessage);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to submit report.";
       setStatusKind("error");
@@ -163,10 +161,6 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
     <View style={styles.screen}>
       <Text style={styles.kicker}>Citizen report</Text>
       <Text style={styles.title}>Report a Pune traffic problem</Text>
-      <Text style={styles.copy}>
-        Keep the public summary factual. Private address details are stored separately
-        and should not appear on SEO pages.
-      </Text>
 
       <View style={styles.panel}>
         <View style={[styles.notice, styles[statusKind]]}>
@@ -256,25 +250,19 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           })}
         </View>
 
-        <Text style={styles.label}>Severity</Text>
-        <View style={styles.chips}>
-          {(["low", "moderate", "high", "critical"] as IssueSeverity[]).map((item) => {
-            const selected = item === severity;
-            return (
-              <TouchableOpacity
-                key={item}
-                onPress={() => setSeverity(item)}
-                style={[styles.chip, selected && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {category === "other" ? (
+          <>
+            <Text style={styles.label}>Custom Category</Text>
+            <TextInput
+              onChangeText={setCustomCategory}
+              placeholder="e.g. Fallen tree, street light issue..."
+              style={styles.input}
+              value={customCategory}
+            />
+          </>
+        ) : null}
 
-        <Text style={styles.label}>Public summary</Text>
+        <Text style={styles.label}>Public summary (Optional)</Text>
         <TextInput
           multiline
           onChangeText={setPublicSummary}
@@ -284,7 +272,7 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           value={publicSummary}
         />
 
-        <Text style={styles.label}>Suggested solution</Text>
+        <Text style={styles.label}>Suggested solution (Optional)</Text>
         <TextInput
           multiline
           onChangeText={setSuggestedSolution}
@@ -294,32 +282,16 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           value={suggestedSolution}
         />
 
-        <Text style={styles.label}>Citizen landmark wording</Text>
-        <TextInput
-          onChangeText={setCitizenLandmark}
-          placeholder="In front of XYZ Society"
-          style={styles.input}
-          value={citizenLandmark}
-        />
-
-        <Text style={styles.label}>Private address or landmark</Text>
-        <TextInput
-          onChangeText={setPrivateAddress}
-          placeholder="Optional, not shown publicly"
-          style={styles.input}
-          value={privateAddress}
-        />
-
-        <Text style={styles.label}>Pincode</Text>
+        <Text style={styles.label}>Pincode *</Text>
         <TextInput
           keyboardType="number-pad"
           onChangeText={setPincode}
-          placeholder="Optional"
+          placeholder="Enter 6-digit pincode"
           style={styles.input}
           value={pincode}
         />
 
-        <Text style={styles.label}>Ward number</Text>
+        <Text style={styles.label}>Prabhag number (Optional)</Text>
         <TextInput
           onChangeText={setWardNumber}
           placeholder="Optional"

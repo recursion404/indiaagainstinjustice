@@ -242,6 +242,7 @@ export function IssuesScreen({ onOpenProfile, session }: IssuesScreenProps) {
               confirmation={confirmations[issue.id]}
               issue={issue}
               key={issue.id}
+              session={session}
               shared={shared}
               supported={supported}
               onConfirmNotObserved={() => handleConfirm(issue, false)}

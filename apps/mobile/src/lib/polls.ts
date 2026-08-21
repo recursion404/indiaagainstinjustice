@@ -93,3 +93,42 @@ export async function voteInPoll(pollId: string, optionId: string, userId: strin
     throw error;
   }
 }
+
+export async function createPoll(
+  question: string,
+  optionLabels: string[],
+  userId: string
+): Promise<void> {
+  const cleanQuestion = question.trim();
+  const slug = cleanQuestion.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.floor(1000 + Math.random() * 9000);
+
+  const { data: poll, error: pollError } = await supabase
+    .from("polls")
+    .insert({
+      question: cleanQuestion,
+      slug,
+      creator_id: userId,
+      is_public: true
+    })
+    .select("id")
+    .single();
+
+  if (pollError) {
+    throw pollError;
+  }
+
+  const optionPayload = optionLabels
+    .filter((label) => label.trim())
+    .map((label) => ({
+      poll_id: poll.id,
+      label: label.trim()
+    }));
+
+  const { error: optionsError } = await supabase
+    .from("poll_options")
+    .insert(optionPayload);
+
+  if (optionsError) {
+    throw optionsError;
+  }
+}

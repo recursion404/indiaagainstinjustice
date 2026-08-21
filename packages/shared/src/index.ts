@@ -1,54 +1,44 @@
 export const issueCategories = [
-  "traffic_jam",
-  "road_bottleneck",
   "road_work",
+  "no_traffic_police_on_signal",
   "accident",
   "broken_signal",
   "vip_convoy",
-  "road_damage",
   "signal_issue",
   "illegal_parking",
   "wrong_side_driving",
   "encroachment",
   "waterlogging",
   "pothole",
-  "missing_road_link",
-  "road_widening_required",
+  "incomplete_road",
   "diversion",
   "public_event",
-  "bus_pmpml_issue",
+  "people_waiting_for_bus_on_road",
   "heavy_vehicle_movement",
   "signal_timing",
   "pedestrian_crossing",
-  "public_transport",
-  "unsafe_junction",
   "other"
 ] as const;
 
 export const issueCategoryLabels: Record<(typeof issueCategories)[number], string> = {
-  traffic_jam: "Traffic jam",
-  road_bottleneck: "Road bottleneck",
-  road_work: "Road work",
+  road_work: "Road work In Progress",
+  no_traffic_police_on_signal: "No Traffic Police on Signal",
   accident: "Accident",
   broken_signal: "Broken traffic signal",
   vip_convoy: "VIP convoy",
-  road_damage: "Road problem",
-  signal_issue: "Signal issue",
-  illegal_parking: "Illegal parking",
+  signal_issue: "Signal issue/Not Working",
+  illegal_parking: "Illegal Parking On Road side",
   wrong_side_driving: "Wrong-side driving",
-  encroachment: "Encroachment",
+  encroachment: "Encroachment On Road/Footpath",
   waterlogging: "Waterlogging",
-  pothole: "Pothole",
-  missing_road_link: "Missing road link",
-  road_widening_required: "Road widening required",
+  pothole: "Potholes",
+  incomplete_road: "InComplete Road",
   diversion: "Diversion",
-  public_event: "Public event",
-  bus_pmpml_issue: "Bus/PMPML issue",
+  public_event: "Public Event/Rally",
+  people_waiting_for_bus_on_road: "People waiting for Bus on Road",
   heavy_vehicle_movement: "Heavy vehicle movement",
   signal_timing: "Signal timing",
   pedestrian_crossing: "Pedestrian crossing",
-  public_transport: "Public transport",
-  unsafe_junction: "Unsafe junction",
   other: "Other"
 };
 
@@ -102,6 +92,7 @@ export type PublicIssue = {
   title: string;
   slug: string;
   category: IssueCategory;
+  customCategory?: string | null;
   status: IssueStatus;
   severity?: IssueSeverity;
   trafficCondition?: TrafficCondition;
@@ -113,6 +104,7 @@ export type PublicIssue = {
   suggestedSolution?: string | null;
   supportCount: number;
   shareCount: number;
+  commentCount?: number;
   confirmationCount?: number;
   notObservedCount?: number;
   createdAt: string;

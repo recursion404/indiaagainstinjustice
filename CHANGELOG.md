@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-08-21 - Report Streamlining, Anonymous Reporting, and Engagement Features
+
+### Report Form Updates (Web & Mobile)
+- Enabled anonymous issue reporting by removing the login requirement.
+- Removed "Citizen landmark wording" and "Private address or landmark" fields to simplify the form.
+- Removed the "Severity" input field.
+- Made "Public summary", "Suggested solution", and "Prabhag number" (formerly "Ward number") optional fields.
+- Made "Pincode" a mandatory field.
+- Updated the order and list of issue categories.
+- Added a custom text field that appears when the "Other" category is selected.
+- Added a confirmation alert box that appears after a successful report submission.
+
+### UI and Wording Changes
+- Renamed the first navigation tab to "Report Traffic".
+- Renamed the issues navigation tab to "issue list".
+- Updated the pledge text to: "I will respect signals, avoid wrong-side driving, keep lanes clear, not block public transport stops and support safer Pune roads."
+- Renamed the "Support" action on issues to "Upvote".
+
+### Engagement Features
+- Implemented a comment section for individual issues, allowing both anonymous and authenticated users to participate.
+- Enabled poll creation from both the web and mobile app interfaces.
+- Added social media sharing buttons (Facebook, X, LinkedIn) for issues, complete with a template message and issue link.
+
+### Backend and Database
+- Added migration `0014_new_categories_and_anon_reporting.sql` to update categories and schema for anonymous reporting.
+- Added migration `0015_add_issue_comments.sql` to create the `issue_comments` table.
+- Added migrations `0016_grant_table_privileges.sql`, `0017_fix_anon_rls_policy.sql`, and `0018_submit_issue_rpc.sql` to fix PostgreSQL table privileges and RLS policies for anonymous users, switching issue creation to a reliable `SECURITY DEFINER` RPC function.
+
 ## 2026-08-20 - Deployment and environment configuration
 
 - Updated public Supabase environment examples for the current Supabase project.

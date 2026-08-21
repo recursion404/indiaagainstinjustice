@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <nav className="nav" aria-label="Primary navigation">
               <Link href="/live-traffic">Live Traffic</Link>
-              <Link href="/report-traffic-problem">Report</Link>
+              <Link href="/report-traffic-problem">Report Traffic</Link>
               <Link href="/top-traffic-problems">Top Problems</Link>
               <Link href="/polls">Polls</Link>
               <Link href="/traffic-rules-pledge">Pledge</Link>

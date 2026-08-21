@@ -6,7 +6,7 @@ export const sampleIssues: PublicIssue[] = [
     publicId: "PUN-001245",
     title: "Heavy traffic near Baner main road",
     slug: "baner-heavy-traffic-pun-001245",
-    category: "traffic_jam",
+    category: "road_work",
     status: "published",
     area: "Baner",
     city: "Pune",

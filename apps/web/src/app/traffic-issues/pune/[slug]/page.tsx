@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MapPin } from "lucide-react";
 import { getPublicIssueBySlug, getPublicIssueUpdates } from "@/lib/data";
 import { IssueEngagement } from "./IssueEngagement";
+import { IssueComments } from "./IssueComments";
 
 type PageProps = {
   params: { slug: string };
@@ -65,7 +66,6 @@ export default async function PublicIssuePage({ params }: PageProps) {
         <p>{issue.summary}</p>
         <div className="stats">
           <div className="stat"><strong>{issue.trafficCondition ?? "heavy"}</strong><span>traffic condition</span></div>
-          <div className="stat"><strong>{issue.severity ?? "moderate"}</strong><span>severity</span></div>
           <div className="stat"><strong>{issue.locationKind ?? "area"}</strong><span>location type</span></div>
         </div>
         {issue.suggestedSolution ? (
@@ -76,12 +76,14 @@ export default async function PublicIssuePage({ params }: PageProps) {
         ) : null}
         <IssueEngagement
           issueId={issue.id}
+          issueTitle={issue.title}
           initialConfirmationCount={issue.confirmationCount ?? 0}
           initialNotObservedCount={issue.notObservedCount ?? 0}
           initialShareCount={issue.shareCount}
           initialSupportCount={issue.supportCount}
         />
       </section>
+      <IssueComments issueId={issue.id} initialCount={issue.commentCount ?? 0} />
       <section className="band">
         <h2>Public action record</h2>
         {updates.length === 0 ? <p className="muted">No public action updates have been recorded yet.</p> : null}
