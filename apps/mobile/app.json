@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Citizens First Pune",
-    "slug": "pune-traffic-app",
+    "name": "India Against Injustice",
+    "slug": "india-against-injustice",
     "version": "0.1.0",
     "orientation": "portrait",
-    "scheme": "citizensfirstpune",
+    "scheme": "indiaagainstinjustice",
     "userInterfaceStyle": "light",
     "plugins": [
       [
@@ -21,13 +21,13 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Citizens First Pune uses the camera to attach traffic issue photos to citizen reports.",
-        "NSPhotoLibraryUsageDescription": "Citizens First Pune uses photo library access to attach traffic issue photos to citizen reports.",
-        "NSLocationWhenInUseUsageDescription": "Citizens First Pune uses your location to attach an approximate issue point to a traffic report."
+        "NSCameraUsageDescription": "India Against Injustice uses the camera to attach evidence/photos to civic reports.",
+        "NSPhotoLibraryUsageDescription": "India Against Injustice uses photo library access to attach evidence/photos to civic reports.",
+        "NSLocationWhenInUseUsageDescription": "India Against Injustice uses your location to attach an approximate issue point to a report."
       }
     },
     "android": {
-      "package": "com.citizensfirstpune.app",
+      "package": "com.indiaagainstinjustice.app",
       "versionCode": 1,
       "permissions": [
         "CAMERA",

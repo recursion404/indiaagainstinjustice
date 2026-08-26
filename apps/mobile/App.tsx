@@ -13,11 +13,11 @@ import { colors, spacing } from "./src/theme";
 type Tab = "report" | "issues" | "polls" | "pledge" | "profile";
 
 const tabs: Array<{ label: string; value: Tab }> = [
-  { label: "Report Traffic", value: "report" },
-  { label: "Issue List", value: "issues" },
+  { label: "Report Issue", value: "report" },
+  { label: "Issues", value: "issues" },
   { label: "Polls", value: "polls" },
-  { label: "My Pledge", value: "pledge" },
-  { label: "My Profile", value: "profile" }
+  { label: "Pledge", value: "pledge" },
+  { label: "Profile", value: "profile" }
 ];
 
 export default function App() {
@@ -48,8 +48,8 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <Text style={styles.brand}>Citizens First Pune</Text>
-        <Text style={styles.tagline}>Citizens First - Traffic First</Text>
+        <Text style={styles.brand}>India Against Injustice</Text>
+        <Text style={styles.tagline}>Public Accountability & Civic Records</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content}>{screen}</ScrollView>
       <View style={styles.tabs}>

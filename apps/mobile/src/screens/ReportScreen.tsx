@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import type { IssueCategory, LocationKind, TrafficCondition } from "@citizens-first/shared";
+import type { LocationKind, TrafficCondition, CivicCategory } from "@citizens-first/shared";
 import type { Session } from "@supabase/supabase-js";
-import { quickCategories } from "../data/sample";
+import { supabase } from "../lib/supabase";
 import type { IssuePhotoDraft } from "../lib/issues";
 import { submitTrafficIssue } from "../lib/issues";
 import { colors, spacing } from "../theme";
@@ -16,8 +16,11 @@ type ReportScreenProps = {
 
 export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
   const [title, setTitle] = useState("");
-  const [area, setArea] = useState("");
-  const [category, setCategory] = useState<IssueCategory>("road_work");
+  const [state, setState] = useState("");
+  const [district, setDistrict] = useState("");
+  const [townVillage, setTownVillage] = useState("");
+  const [category, setCategory] = useState("traffic");
+  const [categoriesList, setCategoriesList] = useState<CivicCategory[]>([]);
   const [customCategory, setCustomCategory] = useState("");
   const [trafficCondition, setTrafficCondition] = useState<TrafficCondition>("heavy");
   const [locationKind, setLocationKind] = useState<LocationKind>("area");
@@ -25,14 +28,37 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
   const [publicSummary, setPublicSummary] = useState("");
   const [suggestedSolution, setSuggestedSolution] = useState("");
   const [pincode, setPincode] = useState("");
-  const [wardNumber, setWardNumber] = useState("");
   const [photo, setPhoto] = useState<IssuePhotoDraft | null>(null);
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(
-    session ? "Fill in the fields to submit a traffic report." : "You are submitting anonymously. Sign in from Profile to track your reports."
+    session ? "Fill in the fields to submit a civic report." : "You are submitting anonymously. Sign in from Profile to track your reports."
   );
   const [statusKind, setStatusKind] = useState<"info" | "success" | "error">("info");
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("is_active", true)
+          .order("label", { ascending: true });
+        
+        if (!error && data) {
+          setCategoriesList(data.map(c => ({
+            slug: c.slug,
+            label: c.label,
+            icon: c.icon,
+            isActive: c.is_active
+          })));
+        }
+      } catch (err) {
+        console.warn("Failed to load dynamic categories:", err);
+      }
+    }
+    loadCategories();
+  }, []);
 
   async function handlePickPhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -97,10 +123,10 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
   }
 
   async function handleSubmit() {
-    if (!title.trim() || !area.trim()) {
+    if (!title.trim() || !state.trim() || !townVillage.trim()) {
       setStatusKind("error");
-      setStatusMessage("Add a title and area first.");
-      Alert.alert("Missing details", "Add a title and area first.");
+      setStatusMessage("Title, State, and Town/Village are mandatory fields.");
+      Alert.alert("Missing details", "Title, State, and Town/Village are mandatory fields.");
       return;
     }
 
@@ -117,23 +143,20 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
     try {
       const submittedIssue = await submitTrafficIssue({
         title,
-        area,
         category,
         customCategory: category === "other" ? customCategory : undefined,
-        severity: "moderate",
-        trafficCondition,
-        locationKind,
-        locationName,
-        publicSummary,
-        suggestedSolution,
+        state,
+        district: district || undefined,
+        townVillage,
         pincode,
-        wardNumber,
-        latitude: location?.latitude,
-        longitude: location?.longitude,
+        publicSummary,
+        locationName,
         photo
       }, session?.user.id ?? null);
       setTitle("");
-      setArea("");
+      setState("");
+      setDistrict("");
+      setTownVillage("");
       setCustomCategory("");
       setTrafficCondition("heavy");
       setLocationKind("area");
@@ -141,7 +164,6 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
       setPublicSummary("");
       setSuggestedSolution("");
       setPincode("");
-      setWardNumber("");
       setPhoto(null);
       setLocation(null);
       setStatusKind("success");
@@ -159,8 +181,8 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.kicker}>Citizen report</Text>
-      <Text style={styles.title}>Report a Pune traffic problem</Text>
+      <Text style={styles.kicker}>Public Interest Report</Text>
+      <Text style={styles.title}>Report an Injustice / Issue</Text>
 
       <View style={styles.panel}>
         <View style={[styles.notice, styles[statusKind]]}>
@@ -172,56 +194,27 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           ) : null}
         </View>
 
-        <Text style={styles.label}>Problem title</Text>
+        <Text style={styles.label}>Issue Title / Summary *</Text>
         <TextInput
           onChangeText={setTitle}
-          placeholder="Heavy traffic near Baner main road"
+          placeholder="e.g. Unfinished road bridge causing severe safety hazard"
           style={styles.input}
           value={title}
         />
 
-        <Text style={styles.label}>Area</Text>
-        <TextInput
-          onChangeText={setArea}
-          placeholder="Baner, Wakad, Hinjewadi..."
-          style={styles.input}
-          value={area}
-        />
-
-        <Text style={styles.label}>Location type</Text>
+        <Text style={styles.label}>Select Category / Topic *</Text>
         <View style={styles.chips}>
-          {(["chowk", "road", "area", "landmark"] as LocationKind[]).map((item) => {
-            const selected = item === locationKind;
+          {(categoriesList.length > 0 ? categoriesList : [
+            { slug: "traffic", label: "Traffic & Safety" },
+            { slug: "infrastructure", label: "Infrastructure & Roads" },
+            { slug: "garbage", label: "Garbage & Sanitation" },
+            { slug: "corruption", label: "Corruption & Bribes" }
+          ]).map((item) => {
+            const selected = item.slug === category;
             return (
               <TouchableOpacity
-                key={item}
-                onPress={() => setLocationKind(item)}
-                style={[styles.chip, selected && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <Text style={styles.label}>Location name</Text>
-        <TextInput
-          onChangeText={setLocationName}
-          placeholder="Baner Radha Chowk, Wakad Bridge..."
-          style={styles.input}
-          value={locationName}
-        />
-
-        <Text style={styles.label}>Category</Text>
-        <View style={styles.chips}>
-          {quickCategories.map((item) => {
-            const selected = item.value === category;
-            return (
-              <TouchableOpacity
-                key={item.value}
-                onPress={() => setCategory(item.value)}
+                key={item.slug}
+                onPress={() => setCategory(item.slug)}
                 style={[styles.chip, selected && styles.chipSelected]}
               >
                 <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
@@ -232,71 +225,67 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           })}
         </View>
 
-        <Text style={styles.label}>Traffic condition</Text>
-        <View style={styles.chips}>
-          {(["normal", "moderate", "heavy", "severe", "cleared"] as TrafficCondition[]).map((item) => {
-            const selected = item === trafficCondition;
-            return (
-              <TouchableOpacity
-                key={item}
-                onPress={() => setTrafficCondition(item)}
-                style={[styles.chip, selected && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                  {item.replaceAll("_", " ")}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
         {category === "other" ? (
           <>
-            <Text style={styles.label}>Custom Category</Text>
+            <Text style={styles.label}>Custom Topic Description</Text>
             <TextInput
               onChangeText={setCustomCategory}
-              placeholder="e.g. Fallen tree, street light issue..."
+              placeholder="Describe this topic"
               style={styles.input}
               value={customCategory}
             />
           </>
         ) : null}
 
-        <Text style={styles.label}>Public summary (Optional)</Text>
+        <Text style={styles.label}>State *</Text>
         <TextInput
-          multiline
-          onChangeText={setPublicSummary}
-          placeholder="Describe what citizens should know publicly."
-          style={[styles.input, styles.textarea]}
-          textAlignVertical="top"
-          value={publicSummary}
+          onChangeText={setState}
+          placeholder="e.g. Maharashtra, Karnataka, Delhi..."
+          style={styles.input}
+          value={state}
         />
 
-        <Text style={styles.label}>Suggested solution (Optional)</Text>
+        <Text style={styles.label}>District (Optional)</Text>
         <TextInput
-          multiline
-          onChangeText={setSuggestedSolution}
-          placeholder="Optional: change signal timing, remove illegal parking, open alternate road..."
-          style={[styles.input, styles.textareaSmall]}
-          textAlignVertical="top"
-          value={suggestedSolution}
+          onChangeText={setDistrict}
+          placeholder="e.g. Pune, Mumbai, Bangalore..."
+          style={styles.input}
+          value={district}
+        />
+
+        <Text style={styles.label}>Town / Village / Ward *</Text>
+        <TextInput
+          onChangeText={setTownVillage}
+          placeholder="e.g. Baner, Wakad, Indiranagar..."
+          style={styles.input}
+          value={townVillage}
         />
 
         <Text style={styles.label}>Pincode *</Text>
         <TextInput
           keyboardType="number-pad"
           onChangeText={setPincode}
-          placeholder="Enter 6-digit pincode"
+          placeholder="Enter 6-digit postal pincode"
           style={styles.input}
           value={pincode}
         />
 
-        <Text style={styles.label}>Prabhag number (Optional)</Text>
+        <Text style={styles.label}>Detailed Description / Notes (Optional)</Text>
         <TextInput
-          onChangeText={setWardNumber}
-          placeholder="Optional"
+          multiline
+          onChangeText={setPublicSummary}
+          placeholder="Provide any additional details or evidence notes..."
+          style={[styles.input, styles.textarea]}
+          textAlignVertical="top"
+          value={publicSummary}
+        />
+
+        <Text style={styles.label}>Specific Landmark / Road (Optional)</Text>
+        <TextInput
+          onChangeText={setLocationName}
+          placeholder="e.g. Near Indiranagar Metro Station"
           style={styles.input}
-          value={wardNumber}
+          value={locationName}
         />
 
         <View style={styles.mediaRow}>
@@ -333,145 +322,184 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
 
 const styles = StyleSheet.create({
   screen: {
-    gap: spacing.md
+    gap: spacing.lg
   },
   kicker: {
-    color: colors.civic,
+    color: "#FF671F", // Saffron Accent
     fontWeight: "900",
-    textTransform: "uppercase"
+    textTransform: "uppercase",
+    fontSize: 12,
+    letterSpacing: 1.5,
+    marginBottom: -4
   },
   title: {
-    color: colors.ink,
-    fontSize: 36,
-    fontWeight: "900",
-    lineHeight: 40
+    color: "#0B1F4B", // Navy Ink
+    fontSize: 32,
+    fontWeight: "950",
+    lineHeight: 38,
+    letterSpacing: -0.5
   },
   copy: {
-    color: colors.muted,
-    fontSize: 16,
-    lineHeight: 24
+    color: "#41516F", // Muted Navy
+    fontSize: 15,
+    lineHeight: 22
   },
   panel: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#F1F5F9",
+    borderRadius: 20,
     borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md
+    gap: spacing.md,
+    padding: spacing.md,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 2
   },
   label: {
-    color: colors.muted,
-    fontWeight: "800"
+    color: "#41516F",
+    fontWeight: "700",
+    fontSize: 14,
+    marginBottom: -spacing.xs
   },
   input: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
     borderWidth: 1,
-    color: colors.ink,
-    minHeight: 46,
-    paddingHorizontal: 12
+    color: "#0B1F4B",
+    minHeight: 48,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.01,
+    shadowRadius: 4,
+    elevation: 1
   },
   textarea: {
     minHeight: 112,
-    paddingTop: 12
+    paddingTop: 12,
+    paddingBottom: 12
   },
   textareaSmall: {
     minHeight: 82,
-    paddingTop: 12
+    paddingTop: 12,
+    paddingBottom: 12
   },
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm
+    gap: 8,
+    marginVertical: 4
   },
   chip: {
-    backgroundColor: colors.paleGreen,
-    borderColor: colors.paleGreen,
-    borderRadius: 999,
+    backgroundColor: "#F1F5F9",
+    borderColor: "#E2E8F0",
+    borderRadius: 9999,
     borderWidth: 1,
-    paddingHorizontal: 11,
-    paddingVertical: 8
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 2,
+    elevation: 0.5
   },
   chipSelected: {
-    backgroundColor: colors.road,
-    borderColor: colors.road
+    backgroundColor: "#0B1F4B",
+    borderColor: "#0B1F4B"
   },
   chipText: {
-    color: colors.civic,
-    fontWeight: "900"
+    color: "#475569",
+    fontWeight: "700",
+    fontSize: 13
   },
   chipTextSelected: {
-    color: colors.surface
+    color: "#FFFFFF"
   },
   button: {
     alignItems: "center",
-    backgroundColor: colors.road,
-    borderRadius: 6,
+    backgroundColor: "#FF671F", // Saffron primary button
+    borderRadius: 14,
     justifyContent: "center",
-    marginTop: spacing.xs,
-    minHeight: 48
+    marginTop: spacing.sm,
+    minHeight: 52,
+    shadowColor: "#FF671F",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3
   },
   buttonDisabled: {
     opacity: 0.6
   },
   buttonText: {
-    color: colors.surface,
-    fontWeight: "900"
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 16
   },
   mediaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm
+    gap: 8,
+    marginTop: 4
   },
   secondaryButton: {
     alignItems: "center",
-    borderColor: colors.road,
-    borderRadius: 6,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
     borderWidth: 1,
     justifyContent: "center",
     minHeight: 42,
-    paddingHorizontal: 14
+    paddingHorizontal: 14,
+    backgroundColor: "#FFFFFF"
   },
   secondaryButtonText: {
-    color: colors.road,
-    fontWeight: "900"
+    color: "#0B1F4B",
+    fontWeight: "700",
+    fontSize: 13
   },
   preview: {
     aspectRatio: 16 / 10,
-    borderRadius: 8,
+    borderRadius: 14,
     width: "100%"
   },
   notice: {
-    borderRadius: 8,
+    borderRadius: 16,
     gap: spacing.sm,
-    padding: spacing.md
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: "#E2E8F0"
   },
   info: {
-    backgroundColor: colors.paleGreen
+    backgroundColor: "#F8FAFC"
   },
   success: {
-    backgroundColor: colors.paleGreen
+    backgroundColor: "#E7F4EB"
   },
   error: {
-    backgroundColor: colors.paleAlert
+    backgroundColor: "#FDE7E0"
   },
   noticeText: {
-    color: colors.ink,
-    fontWeight: "800",
+    color: "#0B1F4B",
+    fontWeight: "700",
+    fontSize: 14,
     lineHeight: 20
   },
   noticeButton: {
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: colors.road,
-    borderRadius: 6,
+    backgroundColor: "#0B1F4B",
+    borderRadius: 10,
     justifyContent: "center",
     minHeight: 38,
     paddingHorizontal: 14
   },
   noticeButtonText: {
-    color: colors.surface,
-    fontWeight: "900"
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 13
   }
 });

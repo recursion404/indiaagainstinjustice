@@ -23,54 +23,52 @@ export type WebsiteIssue = PublicIssue & {
 };
 
 const issueFields =
-  "id, public_id, reporter_id, title, slug, category, custom_category, status, severity, traffic_condition, area, city, public_summary, location_name, location_kind, suggested_solution, citizen_landmark, private_address, pincode, ward_number, support_count, share_count, confirmation_count, not_observed_count, comment_count, is_public, is_sensitive, indexable, authority_name, authority_reference, internal_notes, rejection_reason, published_at, created_at, updated_at";
+  "id, public_id, reporter_id, summary, category, subcategory, status, state, district, town_village, description, additional_location_detail, pincode, rejection_reason, created_at, updated_at";
 
 function mapIssue(row: Record<string, any>): WebsiteIssue {
+  const publicId = row.public_id;
   return {
     id: row.id,
-    publicId: row.public_id,
-    title: row.title,
-    slug: row.slug,
+    publicId: publicId,
+    title: row.summary,
+    slug: `report-${row.id.substring(0, 8)}`,
     category: row.category,
-    customCategory: row.custom_category ?? null,
+    customCategory: row.subcategory ?? null,
     status: row.status,
-    severity: row.severity,
-    trafficCondition: row.traffic_condition,
-    area: row.area,
-    city: row.city ?? "Pune",
-    summary: row.public_summary,
-    locationName: row.location_name,
-    locationKind: row.location_kind,
-    suggestedSolution: row.suggested_solution,
-    supportCount: row.support_count ?? 0,
-    shareCount: row.share_count ?? 0,
-    confirmationCount: row.confirmation_count ?? 0,
-    notObservedCount: row.not_observed_count ?? 0,
-    commentCount: row.comment_count ?? 0,
+    severity: "moderate",
+    trafficCondition: "heavy",
+    area: row.town_village,
+    city: row.district || row.state,
+    summary: row.description,
+    locationName: row.additional_location_detail,
+    locationKind: "area",
+    suggestedSolution: null,
+    supportCount: 0,
+    shareCount: 0,
+    confirmationCount: 0,
+    notObservedCount: 0,
+    commentCount: 0,
     createdAt: row.created_at,
-    isPublic: row.is_public,
-    isSensitive: row.is_sensitive,
-    indexable: row.indexable,
-    privateAddress: row.private_address,
-    citizenLandmark: row.citizen_landmark,
+    isPublic: ["verified", "action_started", "action_taken", "closed"].includes(row.status),
+    isSensitive: false,
+    indexable: true,
+    privateAddress: null,
+    citizenLandmark: null,
     pincode: row.pincode,
-    wardNumber: row.ward_number,
-    authorityName: row.authority_name,
-    authorityReference: row.authority_reference,
-    internalNotes: row.internal_notes,
+    wardNumber: null,
+    authorityName: null,
+    authorityReference: null,
+    internalNotes: null,
     rejectionReason: row.rejection_reason,
-    publishedAt: row.published_at
+    publishedAt: row.created_at
   };
 }
 
 export async function getPublicIssues(limit = 50) {
   const { data, error } = await supabase
-    .from("traffic_issues")
+    .from("reports")
     .select(issueFields)
-    .eq("is_public", true)
-    .eq("is_sensitive", false)
-    .neq("status", "rejected")
-    .order("support_count", { ascending: false })
+    .in("status", ["verified", "action_started", "action_taken", "closed"])
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -79,13 +77,13 @@ export async function getPublicIssues(limit = 50) {
 }
 
 export async function getPublicIssueBySlug(slug: string) {
+  // Extracting report UUID prefix from the customized slug `report-[first_8_chars]`
+  const prefix = slug.replace("report-", "");
   const { data, error } = await supabase
-    .from("traffic_issues")
+    .from("reports")
     .select(issueFields)
-    .eq("slug", slug)
-    .eq("is_public", true)
-    .eq("is_sensitive", false)
-    .neq("status", "rejected")
+    .in("status", ["verified", "action_started", "action_taken", "closed"])
+    .like("id", `${prefix}%`)
     .maybeSingle();
 
   if (error) throw error;
@@ -149,7 +147,7 @@ export type AdminIssue = WebsiteIssue & {
 
 export async function getAdminIssues(status?: IssueStatus) {
   let query = supabase
-    .from("traffic_issues")
+    .from("reports")
     .select(issueFields)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -166,7 +164,7 @@ export async function getAdminIssues(status?: IssueStatus) {
 
 export async function getAdminIssue(issueId: string) {
   const { data, error } = await supabase
-    .from("traffic_issues")
+    .from("reports")
     .select(issueFields)
     .eq("id", issueId)
     .single();
@@ -191,20 +189,11 @@ export async function updateIssueModeration(
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) throw new Error("Please sign in as an admin.");
 
-  const publishable = values.status !== "rejected" && values.isPublic && !values.isSensitive;
   const { data, error } = await supabase
-    .from("traffic_issues")
+    .from("reports")
     .update({
       status: values.status,
-      is_public: publishable,
-      is_sensitive: values.isSensitive,
-      indexable: publishable && values.indexable,
-      authority_name: values.authorityName.trim() || null,
-      authority_reference: values.authorityReference.trim() || null,
-      internal_notes: values.internalNotes.trim() || null,
-      rejection_reason: values.rejectionReason.trim() || null,
-      published_at: publishable ? new Date().toISOString() : null,
-      published_by: publishable ? sessionData.session.user.id : null
+      rejection_reason: values.rejectionReason.trim() || null
     })
     .eq("id", issueId)
     .select(issueFields)

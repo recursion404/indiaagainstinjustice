@@ -164,12 +164,18 @@ export function IssueCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#F1F5F9",
+    borderRadius: 20,
     borderWidth: 1,
     gap: spacing.sm,
-    padding: spacing.md
+    padding: spacing.md,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 2,
+    marginBottom: spacing.sm
   },
   row: {
     alignItems: "center",
@@ -178,151 +184,171 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   status: {
-    backgroundColor: colors.paleGreen,
-    borderRadius: 999,
-    color: colors.civic,
-    fontSize: 11,
-    fontWeight: "900",
+    backgroundColor: "#E7F4EB",
+    borderRadius: 9999,
+    color: "#138A36",
+    fontSize: 10,
+    fontWeight: "800",
     overflow: "hidden",
-    paddingHorizontal: 9,
+    paddingHorizontal: 10,
     paddingVertical: 5,
     textTransform: "uppercase"
   },
   publicId: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: "800"
+    color: "#41516F",
+    fontSize: 11,
+    fontWeight: "700"
   },
   title: {
-    color: colors.ink,
-    fontSize: 20,
-    fontWeight: "900",
-    lineHeight: 25
+    color: "#0B1F4B",
+    fontSize: 18,
+    fontWeight: "800",
+    lineHeight: 23,
+    letterSpacing: -0.3
   },
   area: {
-    color: colors.civic,
-    fontWeight: "800"
+    color: "#FF671F", // Saffron Accent
+    fontWeight: "700",
+    fontSize: 13
   },
   meta: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: "800",
+    color: "#41516F",
+    fontSize: 11,
+    fontWeight: "700",
     textTransform: "uppercase"
   },
   summary: {
-    color: colors.muted,
-    fontSize: 15,
-    lineHeight: 22
+    color: "#41516F",
+    fontSize: 14,
+    lineHeight: 20
   },
   footer: {
     alignItems: "center",
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.md,
+    gap: 8,
     marginTop: spacing.xs
   },
   confirmRow: {
     alignItems: "center",
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.md
+    gap: 8,
+    borderTopColor: "#F1F5F9",
+    borderTopWidth: 1,
+    paddingTop: spacing.xs
   },
   button: {
     alignItems: "center",
-    backgroundColor: colors.road,
-    borderRadius: 6,
+    backgroundColor: "#FF671F", // Saffron upvote
+    borderRadius: 10,
     justifyContent: "center",
-    minHeight: 40,
-    paddingHorizontal: 16
+    minHeight: 38,
+    paddingHorizontal: 14
   },
   buttonText: {
-    color: colors.surface,
-    fontWeight: "900"
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 13
   },
   secondaryButton: {
     alignItems: "center",
-    borderColor: colors.road,
-    borderRadius: 6,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
     borderWidth: 1,
     justifyContent: "center",
-    minHeight: 40,
-    paddingHorizontal: 16
+    minHeight: 38,
+    paddingHorizontal: 14,
+    backgroundColor: "#FFFFFF"
   },
   secondaryButtonText: {
-    color: colors.road,
-    fontWeight: "900"
+    color: "#0B1F4B",
+    fontWeight: "700",
+    fontSize: 13
   },
   secondaryButtonSelected: {
-    backgroundColor: colors.paleGreen,
-    borderColor: colors.civic
+    backgroundColor: "#E2E8F0",
+    borderColor: "#CBD5E1"
   },
   selectedButtonText: {
-    color: colors.civic
+    color: "#0B1F4B"
   },
   buttonSelected: {
-    backgroundColor: colors.civic
+    backgroundColor: "#138A36",
+    borderColor: "#138A36"
   },
   commentsToggle: {
-    paddingVertical: 4
+    paddingVertical: 6,
+    borderTopColor: "#F1F5F9",
+    borderTopWidth: 1,
+    marginTop: 4
   },
   commentsToggleText: {
-    color: colors.road,
-    fontWeight: "800",
+    color: "#0B1F4B",
+    fontWeight: "700",
     fontSize: 13
   },
   commentsSection: {
-    gap: spacing.sm
+    gap: spacing.sm,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    padding: spacing.sm,
+    marginTop: 2
   },
   commentsLoading: {
-    color: colors.muted,
-    fontSize: 13
+    color: "#41516F",
+    fontSize: 12,
+    fontStyle: "italic"
   },
   commentItem: {
-    borderLeftColor: colors.line,
-    borderLeftWidth: 2,
+    borderLeftColor: "#E2E8F0",
+    borderLeftWidth: 3,
     paddingLeft: spacing.sm,
-    gap: 2
+    gap: 2,
+    marginBottom: 4
   },
   commentAuthor: {
-    color: colors.civic,
-    fontWeight: "800",
+    color: "#0B1F4B",
+    fontWeight: "700",
     fontSize: 12
   },
   commentBody: {
-    color: colors.ink,
-    fontSize: 14,
-    lineHeight: 20
+    color: "#41516F",
+    fontSize: 13,
+    lineHeight: 18
   },
   commentInputRow: {
     flexDirection: "row",
-    gap: spacing.sm,
-    alignItems: "flex-end"
+    gap: 8,
+    alignItems: "flex-end",
+    marginTop: 4
   },
   commentInput: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
     borderWidth: 1,
-    minHeight: 40,
-    paddingHorizontal: 10,
+    minHeight: 38,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    color: colors.ink,
-    fontSize: 14
+    color: "#0B1F4B",
+    fontSize: 13
   },
   commentSubmit: {
-    backgroundColor: colors.road,
-    borderRadius: 6,
+    backgroundColor: "#0B1F4B",
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 14,
-    minHeight: 40
+    minHeight: 38
   },
   commentSubmitDisabled: {
     opacity: 0.4
   },
   commentSubmitText: {
-    color: colors.surface,
-    fontWeight: "900"
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 13
   }
 });

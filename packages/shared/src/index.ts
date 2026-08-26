@@ -65,39 +65,36 @@ export const trafficConditions = ["normal", "moderate", "heavy", "severe", "clea
 
 export const locationKinds = ["chowk", "road", "area", "landmark"] as const;
 
-export const puneLocations = [
-  "baner",
-  "balewadi",
-  "wakad",
-  "hinjewadi",
-  "aundh",
-  "kothrud",
-  "viman-nagar",
-  "baner-radha-chowk",
-  "yashada-chowk",
-  "balewadi-high-street",
-  "wakad-bridge"
-] as const;
-
-export type IssueCategory = (typeof issueCategories)[number];
 export type IssueStatus = (typeof issueStatuses)[number];
 export type IssueSeverity = (typeof issueSeverities)[number];
 export type TrafficCondition = (typeof trafficConditions)[number];
 export type LocationKind = (typeof locationKinds)[number];
-export type PuneLocationSlug = (typeof puneLocations)[number];
+
+export type CivicCategory = {
+  slug: string;
+  label: string;
+  icon?: string | null;
+  isActive: boolean;
+  createdAt?: string;
+};
 
 export type PublicIssue = {
   id: string;
   publicId: string;
   title: string;
   slug: string;
-  category: IssueCategory;
+  category: string; // References categories.slug
   customCategory?: string | null;
   status: IssueStatus;
   severity?: IssueSeverity;
   trafficCondition?: TrafficCondition;
-  area: string;
-  city: "Pune";
+  
+  // Dynamic geography
+  state: string;
+  district?: string | null;
+  townVillage: string;
+  pincode: string;
+
   summary: string;
   locationName?: string | null;
   locationKind?: LocationKind | null;

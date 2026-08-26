@@ -16,73 +16,60 @@ export type IssuePhotoDraft = {
 
 export type IssueDraft = {
   title: string;
-  area: string;
-  category: IssueCategory;
+  category: string;
   customCategory?: string;
-  severity: IssueSeverity;
-  trafficCondition: TrafficCondition;
+  state: string;
+  district?: string;
+  townVillage: string;
+  pincode: string;
   publicSummary?: string;
   locationName?: string;
-  locationKind?: LocationKind;
-  suggestedSolution?: string;
-  pincode?: string;
-  wardNumber?: string;
-  latitude?: number;
-  longitude?: number;
   photo?: IssuePhotoDraft | null;
 };
 
 export async function submitTrafficIssue(draft: IssueDraft, userId: string | null) {
-  const publicId = makePublicId();
-  const slug = makeSlug([draft.area, draft.title, publicId]);
-
-  const { data, error } = await supabase.rpc("submit_traffic_issue", {
-    p_public_id:          publicId,
-    p_reporter_id:        userId ?? null,
-    p_title:              draft.title.trim(),
-    p_slug:               slug,
-    p_category:           draft.category,
-    p_custom_category:    draft.customCategory?.trim() || null,
-    p_traffic_condition:  draft.trafficCondition,
-    p_area:               draft.area.trim(),
-    p_public_summary:     draft.publicSummary?.trim() || "",
-    p_location_name:      draft.locationName?.trim() || draft.area.trim(),
-    p_location_kind:      draft.locationKind ?? "area",
-    p_suggested_solution: draft.suggestedSolution?.trim() || null,
-    p_pincode:            draft.pincode?.trim() || null,
-    p_ward_number:        draft.wardNumber?.trim() || null,
-    p_latitude:           draft.latitude ?? null,
-    p_longitude:          draft.longitude ?? null
+  const { data, error } = await supabase.rpc("submit_report_rpc", {
+    p_reporter_name:              "Citizen",
+    p_reporter_mobile:            "",
+    p_category:                   draft.category,
+    p_subcategory:                draft.customCategory?.trim() || null,
+    p_summary:                    draft.title.trim(),
+    p_description:                draft.publicSummary?.trim() || "",
+    p_state:                      draft.state.trim(),
+    p_district:                   draft.district?.trim() || null,
+    p_town_village:               draft.townVillage.trim(),
+    p_pincode:                    draft.pincode.trim(),
+    p_photo_url:                  null,
+    p_video_url:                  null,
+    p_additional_location_detail: draft.locationName?.trim() || null
   });
 
   if (error) {
     throw error;
   }
 
-  const row = (data as Array<{ id: string; public_id: string }>)[0];
+  const reportId = data as string;
 
   if (draft.photo) {
     await uploadIssuePhoto({
-      issueId: row.id,
-      publicId: row.public_id,
+      issueId: reportId,
+      publicId: `Report-${reportId.substring(0, 8)}`,
       photo: draft.photo,
       userId
     });
   }
 
-  return row;
+  return { id: reportId, public_id: `Report-${reportId.substring(0, 8)}` };
 }
 
 
 export async function fetchPublicIssues(): Promise<PublicIssue[]> {
   const { data, error } = await supabase
-    .from("traffic_issues")
+    .from("reports")
     .select(
-      "id, public_id, title, slug, category, custom_category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, comment_count, confirmation_count, not_observed_count, created_at"
+      "id, public_id, summary, category, subcategory, status, state, district, town_village, description, created_at"
     )
-    .eq("is_public", true)
-    .eq("is_sensitive", false)
-    .order("support_count", { ascending: false })
+    .in("status", ["verified", "action_started", "action_taken", "closed"])
     .order("created_at", { ascending: false })
     .limit(25);
 
@@ -93,21 +80,21 @@ export async function fetchPublicIssues(): Promise<PublicIssue[]> {
   return (data ?? []).map((issue) => ({
     id: issue.id,
     publicId: issue.public_id,
-    title: issue.title,
-    slug: issue.slug,
+    title: issue.summary,
+    slug: `report-${issue.id.substring(0, 8)}`,
     category: issue.category,
-    customCategory: issue.custom_category,
-    status: issue.status,
-    severity: issue.severity,
-    trafficCondition: issue.traffic_condition,
-    area: issue.area,
-    city: "Pune",
-    summary: issue.public_summary,
-    supportCount: issue.support_count,
-    shareCount: issue.share_count,
-    commentCount: issue.comment_count ?? 0,
-    confirmationCount: issue.confirmation_count ?? 0,
-    notObservedCount: issue.not_observed_count ?? 0,
+    customCategory: issue.subcategory ?? undefined,
+    status: issue.status as any,
+    severity: "moderate",
+    trafficCondition: "heavy",
+    area: issue.town_village,
+    city: issue.district || issue.state,
+    summary: issue.description,
+    supportCount: 0,
+    shareCount: 0,
+    commentCount: 0,
+    confirmationCount: 0,
+    notObservedCount: 0,
     createdAt: issue.created_at
   }));
 }
@@ -152,9 +139,9 @@ export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[
   }
 
   const { data, error } = await supabase
-    .from("traffic_issues")
+    .from("reports")
     .select(
-      "id, public_id, title, slug, category, custom_category, status, severity, traffic_condition, area, city, public_summary, support_count, share_count, comment_count, confirmation_count, not_observed_count, created_at"
+      "id, public_id, summary, category, subcategory, status, state, district, town_village, description, created_at"
     )
     .eq("reporter_id", userId)
     .order("created_at", { ascending: false })
@@ -167,21 +154,21 @@ export async function fetchMyIssues(userId: string | null): Promise<PublicIssue[
   return (data ?? []).map((issue) => ({
     id: issue.id,
     publicId: issue.public_id,
-    title: issue.title,
-    slug: issue.slug,
+    title: issue.summary,
+    slug: `report-${issue.id.substring(0, 8)}`,
     category: issue.category,
-    customCategory: issue.custom_category,
-    status: issue.status,
-    severity: issue.severity,
-    trafficCondition: issue.traffic_condition,
-    area: issue.area,
-    city: "Pune",
-    summary: issue.public_summary,
-    supportCount: issue.support_count,
-    shareCount: issue.share_count,
-    commentCount: issue.comment_count ?? 0,
-    confirmationCount: issue.confirmation_count ?? 0,
-    notObservedCount: issue.not_observed_count ?? 0,
+    customCategory: issue.subcategory ?? undefined,
+    status: issue.status as any,
+    severity: "moderate",
+    trafficCondition: "heavy",
+    area: issue.town_village,
+    city: issue.district || issue.state,
+    summary: issue.description,
+    supportCount: 0,
+    shareCount: 0,
+    commentCount: 0,
+    confirmationCount: 0,
+    notObservedCount: 0,
     createdAt: issue.created_at
   }));
 }
