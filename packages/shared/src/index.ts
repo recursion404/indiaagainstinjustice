@@ -20,6 +20,8 @@ export const issueCategories = [
   "other"
 ] as const;
 
+export type IssueCategory = (typeof issueCategories)[number];
+
 export const issueCategoryLabels: Record<(typeof issueCategories)[number], string> = {
   road_work: "Road work In Progress",
   no_traffic_police_on_signal: "No Traffic Police on Signal",

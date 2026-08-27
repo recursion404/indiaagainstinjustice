@@ -92,7 +92,7 @@ export default async function LiveTrafficPage() {
               </h2>
 
               <p className="flex items-center gap-1 text-xs font-semibold text-slate-500 mb-3">
-                <MapPin size={14} className="text-slate-400" /> {issue.locationName || issue.area}, {issue.city}
+                <MapPin size={14} className="text-slate-400" /> {issue.locationName || issue.townVillage}, {issue.district || issue.state}
               </p>
 
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-4">

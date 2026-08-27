@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { puneLocations } from "@citizens-first/shared";
 
 const locationNames: Record<string, string> = {
   baner: "Baner",
@@ -11,6 +10,8 @@ const locationNames: Record<string, string> = {
   kothrud: "Kothrud",
   "viman-nagar": "Viman Nagar"
 };
+
+const puneLocations = Object.keys(locationNames);
 
 type PageProps = {
   params: { location: string };

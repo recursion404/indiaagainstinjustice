@@ -37,8 +37,9 @@ function mapIssue(row: Record<string, any>): WebsiteIssue {
     status: row.status,
     severity: "moderate",
     trafficCondition: "heavy",
-    area: row.town_village,
-    city: row.district || row.state,
+    state: row.state,
+    district: row.district ?? null,
+    townVillage: row.town_village,
     summary: row.description,
     locationName: row.additional_location_detail,
     locationKind: "area",
@@ -242,13 +243,13 @@ export async function saveContentPost(values: Record<string, any>, id?: string) 
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) throw new Error("Please sign in as an admin.");
 
+  const { published, ...rest } = values;
   const payload = {
-    ...values,
+    ...rest,
     author_id: sessionData.session.user.id,
-    published_at: values.published ? new Date().toISOString() : null,
-    indexable: Boolean(values.indexable && values.published)
+    published_at: published ? new Date().toISOString() : null,
+    indexable: Boolean(values.indexable && published)
   };
-  delete payload.published;
 
   const request = id
     ? supabase.from("content_posts").update(payload).eq("id", id)
@@ -257,6 +258,6 @@ export async function saveContentPost(values: Record<string, any>, id?: string) 
   if (error) throw error;
 }
 
-export function categoryLabel(category: IssueCategory) {
-  return issueCategoryLabels[category] ?? category.replaceAll("_", " ");
+export function categoryLabel(category: string) {
+  return (issueCategoryLabels as Record<string, string>)[category] ?? category.replaceAll("_", " ");
 }

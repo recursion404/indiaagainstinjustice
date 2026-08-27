@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-27 - Root CSS and Sub-Page Rebuilds, TypeScript & Geolocation Refactoring
+
+### Web Sub-Page Rebuilds (Tailwind CSS v4 & Lucide Icons)
+- Rebuilt **Top Traffic Problems (`/top-traffic-problems`)** from scratch with modern, premium interactive cards, unified shadows, and standard Lucide icons (`MapPin`, `ThumbsUp`, `Share2`).
+- Rebuilt **Priority Polls (`/polls`)** with progress indicator bars using gorgeous Tailwind gradients, a clean creation form, and responsive layouts.
+- Rebuilt **Rules Pledge (`/traffic-rules-pledge`)** with a split card interface showcasing civic safety checklists, verified citizen counters, and simplified form states.
+- Rebuilt **Volunteer Onboarding (`/volunteer`)** with structured responsive forms, informative motivation sections, and custom validation notices.
+
+### TypeScript, Imports & Dynamic Geography Refactoring
+- Fixed all compilation issues across `/admin`, `/live-traffic`, `/top-traffic-problems`, `/page.tsx`, and `/traffic-issues/pune/[slug]/page.tsx` by replacing obsolete `.area` and `.city` references with the new dynamic geography attributes (`state`, `district`, `townVillage`, `pincode`).
+- Declared the local `puneLocations` routing list inline in `/pune-traffic/[location]/page.tsx` to resolve a broken export in `@citizens-first/shared`.
+- Safely exported the `IssueCategory` type within `@citizens-first/shared` and updated `categoryLabel` in the web library to handle safe lookups.
+- Refactored `saveContentPost` database functions to use modern destructuring in place of deleting runtime object properties.
+
 ## 2026-08-21 - Report Streamlining, Anonymous Reporting, and Engagement Features
 
 ### Report Form Updates (Web & Mobile)

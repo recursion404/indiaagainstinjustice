@@ -59,7 +59,7 @@ export default async function PublicIssuePage({ params }: PageProps) {
       <span className="status">{issue.status.replaceAll("_", " ")}</span>
       <h1>{issue.title}</h1>
       <p className="issueMeta muted">
-        <MapPin size={16} /> {issue.locationName || issue.area}, {issue.city} | {issue.publicId}
+        <MapPin size={16} /> {issue.locationName || issue.townVillage}, {issue.district || issue.state} | {issue.publicId}
       </p>
       <section className="card">
         <h2>Public Summary</h2>

@@ -91,7 +91,7 @@ export default async function HomePage() {
                   {issue.title}
                 </h3>
                 <p className="flex items-center gap-1 text-xs font-semibold text-slate-500 mb-4">
-                  <MapPin size={14} className="text-slate-400" /> {issue.area}, {issue.city}
+                  <MapPin size={14} className="text-slate-400" /> {issue.townVillage}, {issue.district || issue.state}
                 </p>
                 <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-slate-600">{issue.supportCount} supports</span>
