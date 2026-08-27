@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { siteConfig } from "@/lib/site";
+import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -46,14 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </span>
               </Link>
               
-              <nav className="hidden md:flex items-center gap-1" aria-label="Primary navigation">
-                <Link href="/live-traffic" className="px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Civic Issues</Link>
-                <Link href="/report-traffic-problem" className="px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Report Issue</Link>
-                <Link href="/top-traffic-problems" className="px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Public Records</Link>
-                <Link href="/polls" className="px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Polls</Link>
-                <Link href="/traffic-rules-pledge" className="px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors">Pledge</Link>
-                <Link href="/volunteer" className="ml-2 px-4 py-2 text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-full shadow-sm hover:shadow transition-all">Join Volunteer</Link>
-              </nav>
+              <Navigation />
             </div>
           </header>
           
@@ -61,31 +55,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1 w-full">
             {children}
           </main>
-
-          {/* Mobile Bottom Navigation */}
-          <nav className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden items-center justify-around h-16 border-t border-slate-100 bg-white/95 backdrop-blur-md px-2 pb-safe shadow-lg" aria-label="Mobile bottom navigation">
-            <Link href="/" className="flex flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-orange-600 flex-1">
-              <span className="text-lg">🏛️</span>
-              <span className="text-[10px] font-bold">Home</span>
-            </Link>
-            <Link href="/live-traffic" className="flex flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-orange-600 flex-1">
-              <span className="text-lg">📢</span>
-              <span className="text-[10px] font-bold">Issues</span>
-            </Link>
-            <Link href="/report-traffic-problem" className="flex flex-col items-center justify-center gap-0.5 text-orange-600 hover:text-orange-700 flex-1 relative -top-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-orange-200">
-                <span className="text-xl">＋</span>
-              </div>
-            </Link>
-            <Link href="/polls" className="flex flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-orange-600 flex-1">
-              <span className="text-lg">📊</span>
-              <span className="text-[10px] font-bold">Polls</span>
-            </Link>
-            <Link href="/volunteer" className="flex flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-orange-600 flex-1">
-              <span className="text-lg">🤝</span>
-              <span className="text-[10px] font-bold">Join</span>
-            </Link>
-          </nav>
 
           {/* Footer (Desktop only) */}
           <footer className="hidden md:block py-8 border-t border-slate-100 bg-slate-50/50">
