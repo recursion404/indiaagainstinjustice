@@ -175,14 +175,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {isSignUp && (
-            <div className="flex gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl items-start">
-              <ShieldAlert size={14} className="text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-[10px] font-semibold text-slate-500 leading-normal">
-                <strong>Superadmin Role Control:</strong> All newly created profiles are registered as standard **Citizens**. Administrative/Superadmin promotion can only be authorized and elevated securely by existing Superadmins.
-              </p>
-            </div>
-          )}
+
 
           <button
             type="submit"
