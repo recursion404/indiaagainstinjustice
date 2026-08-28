@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-08-28 - Website Foundation Cleanup, IAI Route Canonicalization, and Header Fix
+
+### Website UI foundation repair
+- Started replacing the earlier mixed vanilla CSS and page-by-page Tailwind patchwork with a shared website UI foundation.
+- Added reusable web UI primitives in `apps/web/src/components/ui.tsx` for page shells, section headers, cards, badges, buttons, inputs, empty states, notices and stat cards.
+- Simplified the global stylesheet in `apps/web/src/app/globals.css` so the site no longer depends on fragile custom utility backports such as `container`, `band`, `card`, `button`, `muted`, `lead`, `timeline`, `engagement`, `actions`, `privatePanel`, `contentBody` and `issueMeta`.
+- Kept the current orange/amber/slate visual theme because it already works well for the new India Against Injustice brand direction.
+
+### Header and navigation regression fix
+- Fixed the broken homepage header where the site brand rendered twice and overlapped the navigation.
+- Root cause: `apps/web/src/app/layout.tsx` already owned the sticky site header, while `apps/web/src/components/Navigation.tsx` had been changed to render a second full `<header>` with another brand block and CTA.
+- Updated `Navigation.tsx` to behave as a links-only navigation fragment again, leaving the root layout as the single header owner.
+- Tightened root header layout spacing in `apps/web/src/app/layout.tsx` so the brand, nav pill and report CTA fit cleanly in one row.
+- Removed a temporary `.codex_write_probe` filesystem access file left from debugging.
+
+### India Against Injustice canonical website routes
+- Added canonical `/report` route for civic issue reporting instead of relying on the old `/report-traffic-problem` path.
+- Added canonical `/issues` and `/issues/[slug]` routes for reviewed public issue pages.
+- Added canonical `/records` route for public civic records.
+- Added canonical `/pledge` route for the citizen responsibility pledge.
+- Converted old Pune Traffic URLs into redirects so existing links continue to work while the real website moves to the IAI information architecture:
+  - `/live-traffic` redirects to `/issues`.
+  - `/top-traffic-problems` redirects to `/records`.
+  - `/report-traffic-problem` redirects to `/report`.
+  - `/traffic-rules-pledge` redirects to `/pledge`.
+  - `/traffic-issues/pune/[slug]` redirects to `/issues/[slug]`.
+  - `/pune-traffic/[location]` redirects to `/issues`.
+
+### SEO and public page structure
+- Rebuilt the homepage around the broader India Against Injustice positioning instead of Pune-only traffic messaging.
+- Added reviewed public issue detail pages with canonical metadata, Open Graph metadata and JSON-LD article structure.
+- Updated the sitemap to include the new canonical website routes and public issue URLs.
+- Updated the not-found experience so missing or unpublished issue records use the shared IAI page shell and clear public-record messaging.
+
 ## 2026-08-28 - Authentication Systems, Superadmin Core, Database Security, and Lifecycle Constraints
 
 ### Citizen Authentication & Sign Up Engine

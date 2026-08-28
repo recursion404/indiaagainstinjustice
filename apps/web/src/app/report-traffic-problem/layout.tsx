@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Report Traffic Problems in Pune | Pune Against Traffic Jams",
-  description:
-    "Report traffic jams, road problems, signal issues, illegal parking and other traffic concerns in Pune. Add your location and photographs and help citizens identify the problems that affect them."
+  title: "Report a Civic Issue | India Against Injustice",
+  description: "This legacy traffic reporting URL now redirects to the India Against Injustice report flow."
 };
 
 export default function ReportLayout({ children }: { children: React.ReactNode }) {

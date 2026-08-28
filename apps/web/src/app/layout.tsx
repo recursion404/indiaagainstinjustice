@@ -37,12 +37,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           
           {/* Header */}
           <header className="sticky top-0 z-40 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-              <Link className="flex flex-col group" href="/">
+            <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+              <Link className="group flex shrink-0 flex-col" href="/">
                 <strong className="text-lg font-black tracking-tight text-slate-900 group-hover:text-orange-600 transition-colors">
                   {siteConfig.name}
                 </strong>
-                <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                <span className="max-w-[240px] text-xs font-medium uppercase tracking-wide text-slate-500 sm:max-w-none">
                   {siteConfig.tagline}
                 </span>
               </Link>

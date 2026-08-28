@@ -1,16 +1,13 @@
-import Link from "next/link";
+import { ButtonLink, EmptyState, PageShell } from "@/components/ui";
 
-export default function NotFoundPage() {
+export default function NotFound() {
   return (
-    <main className="container band">
-      <h1>Page not found</h1>
-      <p className="muted">
-        This public page may not exist yet, or it may have been removed because it
-        contained incomplete or sensitive information.
-      </p>
-      <Link className="button" href="/">
-        Back to home
-      </Link>
-    </main>
+    <PageShell>
+      <EmptyState
+        title="This public record was not found"
+        description="The page may have moved, or the report may not have been reviewed for public visibility yet."
+        action={<ButtonLink href="/issues">Browse public issues</ButtonLink>}
+      />
+    </PageShell>
   );
 }

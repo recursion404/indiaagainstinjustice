@@ -1,27 +1,23 @@
 import type { MetadataRoute } from "next";
-import { siteConfig } from "@/lib/site";
 import { getPublicIssues } from "@/lib/data";
+import { siteConfig } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticRoutes = [
-    "",
-    "/live-traffic",
-    "/report-traffic-problem",
-    "/top-traffic-problems",
-    "/volunteer",
-    "/polls",
-    "/traffic-rules-pledge",
-  ];
+  const staticRoutes = ["", "/issues", "/report", "/records", "/polls", "/pledge", "/volunteer"];
   const issues = await getPublicIssues(500);
 
   return [
     ...staticRoutes.map((route) => ({
       url: `${siteConfig.url}${route}`,
-      lastModified: new Date()
+      lastModified: new Date(),
+      changeFrequency: route === "" ? "daily" : "weekly",
+      priority: route === "" ? 1 : 0.8,
     })),
-    ...issues.filter((issue) => issue.indexable).map((issue) => ({
-      url: `${siteConfig.url}/traffic-issues/pune/${issue.slug}`,
-      lastModified: new Date(issue.publishedAt ?? issue.createdAt)
-    }))
+    ...issues.map((issue) => ({
+      url: `${siteConfig.url}/issues/${issue.slug}`,
+      lastModified: issue.updatedAt ? new Date(issue.updatedAt) : new Date(issue.createdAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
   ];
 }
