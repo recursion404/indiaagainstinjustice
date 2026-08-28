@@ -6,8 +6,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = ["", "/issues", "/report", "/records", "/polls", "/pledge", "/volunteer"];
   const issues = await getPublicIssues(500);
 
-  return [
-    ...staticRoutes.map((route) => ({
+  const routes: MetadataRoute.Sitemap = [
+    ...staticRoutes.map((route): MetadataRoute.Sitemap[number] => ({
       url: `${siteConfig.url}${route}`,
       lastModified: new Date(),
       changeFrequency: route === "" ? "daily" : "weekly",
@@ -20,4 +20,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     })),
   ];
+
+  return routes;
 }

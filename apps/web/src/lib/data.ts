@@ -20,6 +20,7 @@ export type WebsiteIssue = PublicIssue & {
   internalNotes: string | null;
   rejectionReason: string | null;
   publishedAt: string | null;
+  updatedAt: string | null;
 };
 
 const issueFields =
@@ -50,6 +51,7 @@ function mapIssue(row: Record<string, any>): WebsiteIssue {
     notObservedCount: 0,
     commentCount: 0,
     createdAt: row.created_at,
+    updatedAt: row.updated_at ?? null,
     isPublic: ["verified", "action_started", "action_taken", "closed"].includes(row.status),
     isSensitive: false,
     indexable: true,

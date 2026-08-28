@@ -7,7 +7,7 @@ const links = [
   { href: "/polls", label: "Polls" },
   { href: "/pledge", label: "Pledge" },
   { href: "/volunteer", label: "Volunteer" },
-];
+] as const;
 
 export default function Navigation() {
   return (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
-type Tone = "default" | "urgent" | "success" | "muted" | "dark";
+type Tone = "default" | "orange" | "urgent" | "success" | "green" | "muted" | "slate" | "dark";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -43,9 +43,12 @@ export function Card({ children, className }: { children: ReactNode; className?:
 export function Badge({ children, tone = "default", className }: { children: ReactNode; tone?: Tone; className?: string }) {
   const tones: Record<Tone, string> = {
     default: "border-orange-100 bg-orange-50 text-orange-700",
+    orange: "border-orange-100 bg-orange-50 text-orange-700",
     urgent: "border-rose-100 bg-rose-50 text-rose-700",
     success: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    green: "border-emerald-100 bg-emerald-50 text-emerald-700",
     muted: "border-slate-200 bg-slate-100 text-slate-700",
+    slate: "border-slate-200 bg-slate-100 text-slate-700",
     dark: "border-slate-800 bg-slate-900 text-white"
   };
 
@@ -119,15 +122,18 @@ export function EmptyState({ title, description, action }: { title: ReactNode; d
 export function Notice({ children, tone = "default", className }: { children: ReactNode; tone?: Exclude<Tone, "dark">; className?: string }) {
   const tones: Record<Exclude<Tone, "dark">, string> = {
     default: "border-orange-100 bg-orange-50 text-orange-800",
+    orange: "border-orange-100 bg-orange-50 text-orange-800",
     urgent: "border-rose-100 bg-rose-50 text-rose-800",
     success: "border-emerald-100 bg-emerald-50 text-emerald-800",
-    muted: "border-slate-200 bg-slate-50 text-slate-700"
+    green: "border-emerald-100 bg-emerald-50 text-emerald-800",
+    muted: "border-slate-200 bg-slate-50 text-slate-700",
+    slate: "border-slate-200 bg-slate-50 text-slate-700"
   };
 
   return <div className={cn("rounded-xl border p-4 text-sm font-extrabold", tones[tone], className)}>{children}</div>;
 }
 
-export function StatCard({ label, value, tone = "muted" }: { label: ReactNode; value: ReactNode; tone?: "muted" | "urgent" | "success" }) {
+export function StatCard({ label, value, tone = "muted", className }: { label: ReactNode; value: ReactNode; tone?: "muted" | "urgent" | "success"; className?: string }) {
   const tones = {
     muted: "text-slate-900",
     urgent: "text-rose-600",
@@ -135,7 +141,7 @@ export function StatCard({ label, value, tone = "muted" }: { label: ReactNode; v
   };
 
   return (
-    <Card className="flex min-h-32 flex-col justify-between p-6">
+    <Card className={cn("flex min-h-32 flex-col justify-between p-6", className)}>
       <span className="text-xs font-black uppercase tracking-widest text-slate-400">{label}</span>
       <strong className={cn("mt-4 text-4xl font-black", tones[tone])}>{value}</strong>
     </Card>

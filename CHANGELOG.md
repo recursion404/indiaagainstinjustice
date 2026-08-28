@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-08-28 - Firebase App Hosting Web Structure
+
+- Added `apps/web/apphosting.yaml` so Firebase App Hosting can read the web backend config from the same app-root pattern used by `abod-app`.
+- Added an app-local `apps/web/package-lock.json` because Firebase App Hosting expects a dependency lockfile in the configured app root directory.
+- Updated the web app's local shared package dependency to `file:../../packages/shared` so an app-root install can still resolve the monorepo shared package.
+- Pinned the web `next` dependency to exact version `14.2.15` for App Hosting scanner compatibility.
+- Fixed TypeScript blockers exposed by production build: UI badge tone aliases, `StatCard` `className`, issue `customCategory`, sitemap typing, and `updatedAt` mapping.
+- Verified `npm run build` from `apps/web` succeeds when network access to Supabase is available during prerendering.
+
+## 2026-08-28 - Supabase Project Repointing
+
+- Updated web and mobile Supabase environment files to use the new project URL `https://tnhedllrtdcuxvfqksxn.supabase.co`.
+- Updated tracked web and mobile `.env.example` files with the new public anon key for the new Supabase project.
+- Updated local ignored web and mobile `.env` files so development runs point at the same new project.
+- Updated README Supabase project reference and setup URL.
+- Updated local Supabase CLI temp metadata from the previous project ref to `tnhedllrtdcuxvfqksxn`.
+
 ## 2026-08-28 - Website Foundation Cleanup, IAI Route Canonicalization, and Header Fix
 
 ### Website UI foundation repair

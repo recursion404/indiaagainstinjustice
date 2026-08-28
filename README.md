@@ -14,13 +14,13 @@ Citizen-first traffic reporting platform for the `Pune Against Traffic Jams` cam
 The project reference from the current anon key is:
 
 ```txt
-rtzskbzjhaprctdtetcs
+tnhedllrtdcuxvfqksxn
 ```
 
 Use this URL in local env files:
 
 ```txt
-https://rtzskbzjhaprctdtetcs.supabase.co
+https://tnhedllrtdcuxvfqksxn.supabase.co
 ```
 
 ## Local Setup

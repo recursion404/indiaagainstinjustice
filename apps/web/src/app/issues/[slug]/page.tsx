@@ -84,7 +84,7 @@ export default async function IssuePage({ params }: IssuePageProps) {
           <Card className="space-y-5">
             <div className="flex flex-wrap items-center gap-3">
               <Badge tone="orange">{issue.category}</Badge>
-              {issue.subcategory ? <Badge tone="slate">{issue.subcategory}</Badge> : null}
+              {issue.customCategory ? <Badge tone="slate">{issue.customCategory}</Badge> : null}
               <Badge tone="green">{issue.status.replaceAll("_", " ")}</Badge>
             </div>
 

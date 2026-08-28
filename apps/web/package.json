@@ -11,10 +11,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@citizens-first/shared": "*",
+    "@citizens-first/shared": "file:../../packages/shared",
     "@supabase/supabase-js": "^2.45.4",
     "lucide-react": "^0.468.0",
-    "next": "^14.2.15",
+    "next": "14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
