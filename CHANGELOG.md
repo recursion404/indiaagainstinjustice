@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-08-28 - Authentication Systems, Superadmin Core, Database Security, and Lifecycle Constraints
+
+### Citizen Authentication & Sign Up Engine
+- Built a premium, dual-state **Sign In / Sign Up Gate (`/login`)** with custom visual indicators and validation notices.
+- Handled dynamic routing and role-based redirection to securely steer administrators and superadmins directly to the admin dashboard and standard citizens to the homepage.
+- Developed a stateful, global client-side **Navigation Component (`apps/web/src/components/Navigation.tsx`)** that monitors user sessions and updates the UI dynamically:
+  - Displays **"🔑 Sign In"** when unauthenticated on both desktop and mobile bottom navigation bars.
+  - Displays a custom **"👤 [Full Name]"** badge and a **"🚪 Log Out"** button when authenticated.
+  - Dynamically appends a secure **"🛡️ Shield"** link for admins/superadmins to access the moderation queue.
+
+### Superadmin Promotions & SEO Desk Rebuild
+- Integrated a premium **Superadmin System Settings Card** directly inside the moderation workspace to search and elevate any registered citizen profile to `'admin'` instantly using their email.
+- Fully modernized the **SEO Publishing Desk (`/admin/content`)** using high-contrast Tailwind CSS cards, grid forms, markdown editors, and interactive Lucide icons.
+
+### Volunteer Registry Database Foundation
+- Added migration `0007_add_volunteer_requests_table.sql` registering the missing `volunteer_requests` table to support onboarding registration forms seamlessly.
+- Enforced open `INSERT` policies to let anyone apply anonymously or authenticated, and limited `SELECT` views strictly to platform administrators.
+
+### Database security, table-level grants, and check constraints
+- Added migration `0008_grant_update_on_profiles.sql` granting `UPDATE` privileges on the `profiles` table to authenticated users to allow superadmins to execute role elevations securely under RLS.
+- Added migration `0009_grant_all_on_tables_to_authenticated.sql` granting mutation privileges (`INSERT`, `UPDATE`, `DELETE`) on `reports` and `public_records` to authenticated users so that RLS can securely process administrator moderators.
+- Added migration `0010_update_reports_status_check.sql` to expand the legacy `reports_status_check` constraint with all frontend issue statuses (`under_review`, `published`, `assigned`, `action_recorded`, `citizen_verified`, `resolved`), resolving constraint violations during status transitions.
+
 ## 2026-08-27 - Root CSS and Sub-Page Rebuilds, TypeScript & Geolocation Refactoring
 
 ### Web Sub-Page Rebuilds (Tailwind CSS v4 & Lucide Icons)
