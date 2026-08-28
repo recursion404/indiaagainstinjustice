@@ -6,8 +6,10 @@
 - Added an app-local `apps/web/package-lock.json` because Firebase App Hosting expects a dependency lockfile in the configured app root directory.
 - Updated the web app's local shared package dependency to `file:../../packages/shared` so an app-root install can still resolve the monorepo shared package.
 - Pinned the web `next` dependency to exact version `14.2.15` for App Hosting scanner compatibility.
+- Updated the web `start` script to bind Next.js to Firebase's provided `PORT` with a local `3000` fallback, fixing App Hosting/Cloud Run health checks that require listening on port `8080`.
 - Fixed TypeScript blockers exposed by production build: UI badge tone aliases, `StatCard` `className`, issue `customCategory`, sitemap typing, and `updatedAt` mapping.
 - Verified `npm run build` from `apps/web` succeeds when network access to Supabase is available during prerendering.
+- Verified `PORT=8080 npm run start` starts Next.js on `http://localhost:8080`.
 
 ## 2026-08-28 - Supabase Project Repointing
 
