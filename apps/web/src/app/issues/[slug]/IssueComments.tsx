@@ -14,13 +14,19 @@ type IssueComment = {
   createdAt: string;
 };
 
+const COMMENT_LIMITS = {
+  min: 10,
+  max: 1200
+};
+
 export function IssueComments({ issueId }: { issueId: string }) {
   const [session, setSession] = useState<Session | null>(null);
   const [comments, setComments] = useState<IssueComment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ tone: "success" | "error" | "info"; text: string } | null>(null);
+  const [commentError, setCommentError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -46,7 +52,7 @@ export function IssueComments({ issueId }: { issueId: string }) {
 
       setSession(sessionData.session);
       if (error) {
-        setMessage("Comments could not be loaded right now.");
+        setMessage({ tone: "error", text: "Comments could not be loaded right now." });
       } else {
         setComments((commentRows ?? []).map(mapComment));
       }
@@ -66,18 +72,34 @@ export function IssueComments({ issueId }: { issueId: string }) {
   }, [issueId]);
 
   async function postComment() {
+    const trimmedComment = commentText.trim();
+
     if (!session) {
-      setMessage("Please sign in before posting a comment.");
+      setMessage({ tone: "error", text: "Please sign in before posting a comment." });
       return;
     }
 
-    if (!commentText.trim()) {
-      setMessage("Write a comment before posting.");
+    if (!trimmedComment) {
+      setCommentError("Write a comment before posting.");
+      setMessage({ tone: "error", text: "Your comment needs a little text before it can be posted." });
+      return;
+    }
+
+    if (trimmedComment.length < COMMENT_LIMITS.min) {
+      setCommentError(`Comment must be at least ${COMMENT_LIMITS.min} characters.`);
+      setMessage({ tone: "error", text: "Please add a little more context so the comment is useful to others." });
+      return;
+    }
+
+    if (trimmedComment.length > COMMENT_LIMITS.max) {
+      setCommentError(`Comment must be ${COMMENT_LIMITS.max} characters or fewer.`);
+      setMessage({ tone: "error", text: "Please shorten the comment before posting." });
       return;
     }
 
     setPosting(true);
-    setMessage("");
+    setCommentError("");
+    setMessage({ tone: "info", text: "Posting your comment..." });
     try {
       const authorName =
         session.user.user_metadata?.full_name ||
@@ -91,7 +113,7 @@ export function IssueComments({ issueId }: { issueId: string }) {
           issue_id: issueId,
           user_id: session.user.id,
           author_name: authorName,
-          body: commentText.trim()
+          body: trimmedComment
         })
         .select(`
           id,
@@ -107,9 +129,9 @@ export function IssueComments({ issueId }: { issueId: string }) {
 
       setComments((current) => [...current, mapComment(data)]);
       setCommentText("");
-      setMessage("Comment posted.");
+      setMessage({ tone: "success", text: "Comment posted." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not post comment.");
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Could not post comment." });
     } finally {
       setPosting(false);
     }
@@ -163,15 +185,22 @@ export function IssueComments({ issueId }: { issueId: string }) {
         {session ? (
           <div className="space-y-3">
             <textarea
-              className={cn(inputClassName, "min-h-32 resize-y")}
-              maxLength={1200}
-              onChange={(event) => setCommentText(event.target.value)}
+              aria-invalid={Boolean(commentError)}
+              className={cn(inputClassName, "min-h-32 resize-y", commentError && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+              maxLength={COMMENT_LIMITS.max}
+              onChange={(event) => {
+                setCommentText(event.target.value);
+                if (commentError) setCommentError("");
+              }}
               placeholder="Add a public comment, local observation, or useful context..."
               value={commentText}
             />
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-              <span className="text-xs font-bold text-slate-400">{commentText.trim().length}/1200 characters</span>
-              <Button disabled={posting || !commentText.trim()} onClick={postComment}>
+              <div className="flex flex-col gap-1">
+                {commentError ? <span className="text-xs font-bold text-rose-600">{commentError}</span> : null}
+                <span className="text-xs font-bold text-slate-400">{commentText.trim().length}/{COMMENT_LIMITS.max} characters</span>
+              </div>
+              <Button disabled={posting} onClick={postComment}>
                 <Send size={16} />
                 {posting ? "Posting..." : "Post comment"}
               </Button>
@@ -187,8 +216,15 @@ export function IssueComments({ issueId }: { issueId: string }) {
         )}
 
         {message ? (
-          <p className="mt-3 rounded-xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm font-extrabold text-orange-800">
-            {message}
+          <p
+            className={cn(
+              "mt-3 rounded-xl border px-4 py-3 text-sm font-extrabold",
+              message.tone === "success" && "border-emerald-100 bg-emerald-50 text-emerald-800",
+              message.tone === "error" && "border-rose-100 bg-rose-50 text-rose-800",
+              message.tone === "info" && "border-orange-100 bg-orange-50 text-orange-800"
+            )}
+          >
+            {message.text}
           </p>
         ) : null}
       </div>

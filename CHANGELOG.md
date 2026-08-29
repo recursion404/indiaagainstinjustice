@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-29 - Public Form Validation UX
+
+- Added clearer field-level validation to the public report form for title, category, location, pincode, detailed notes, and photo uploads.
+- Added character limits and visible counters for report title, report notes, volunteer intro text, and issue comments.
+- Added field-level volunteer application validation for name, email, selected interest, and introduction length.
+- Improved issue comment validation so signed-in users see specific guidance for empty, too-short, and too-long comments before posting.
+- Removed the browser alert from report submission in favor of in-page success feedback.
+
 ## 2026-08-29 - Public Issue Detail Pages and Comments
 
 - Replaced UUID-prefix issue URLs with SEO-friendly slugs that include the issue title, location, and public ID.

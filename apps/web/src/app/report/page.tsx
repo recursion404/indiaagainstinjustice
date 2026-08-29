@@ -20,6 +20,20 @@ const INDIAN_STATES_DISTRICTS: Record<string, string[]> = {
   Rajasthan: ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer", "Bikaner"]
 };
 
+const REPORT_LIMITS = {
+  titleMin: 10,
+  titleMax: 120,
+  customCategoryMin: 3,
+  customCategoryMax: 60,
+  townVillageMin: 2,
+  townVillageMax: 80,
+  locationNameMax: 120,
+  summaryMax: 1200,
+  photoMaxBytes: 5 * 1024 * 1024
+};
+
+const allowedPhotoTypes = ["image/jpeg", "image/png", "image/webp"];
+
 export default function ReportPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [mode, setMode] = useState<"simple" | "detailed">("simple");
@@ -38,6 +52,20 @@ export default function ReportPage() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+
+  function clearError(field: string) {
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function setFieldValue(field: string, valueSetter: (value: string) => void, value: string) {
+    valueSetter(value);
+    clearError(field);
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -74,16 +102,41 @@ export default function ReportPage() {
 
   async function submitReport() {
     const newErrors: Record<string, string> = {};
-    if (!title.trim()) newErrors.title = "Issue title/summary is required.";
+    const trimmedTitle = title.trim();
+    const trimmedCustomCategory = customCategory.trim();
+    const trimmedTownVillage = townVillage.trim();
+    const trimmedLocationName = locationName.trim();
+    const trimmedSummary = summary.trim();
+    const trimmedPincode = pincode.trim();
+
+    if (!trimmedTitle) newErrors.title = "Add a short title so people can understand the issue quickly.";
+    else if (trimmedTitle.length < REPORT_LIMITS.titleMin) newErrors.title = `Title must be at least ${REPORT_LIMITS.titleMin} characters.`;
+    else if (trimmedTitle.length > REPORT_LIMITS.titleMax) newErrors.title = `Title must be ${REPORT_LIMITS.titleMax} characters or fewer.`;
+
     if (!state.trim()) newErrors.state = "State is required.";
-    if (!townVillage.trim()) newErrors.townVillage = "Town / Village / Ward is required.";
-    if (!pincode.trim()) newErrors.pincode = "Pincode is required.";
-    else if (!/^\d{6}$/.test(pincode.trim())) newErrors.pincode = "Pincode must be exactly 6 digits.";
-    if (category === "other" && !customCategory.trim()) newErrors.customCategory = "Please describe this category.";
+    if (!trimmedTownVillage) newErrors.townVillage = "Add the town, village, area, or ward where this issue exists.";
+    else if (trimmedTownVillage.length < REPORT_LIMITS.townVillageMin) newErrors.townVillage = `Location name must be at least ${REPORT_LIMITS.townVillageMin} characters.`;
+    else if (trimmedTownVillage.length > REPORT_LIMITS.townVillageMax) newErrors.townVillage = `Location name must be ${REPORT_LIMITS.townVillageMax} characters or fewer.`;
+
+    if (!trimmedPincode) newErrors.pincode = "Enter the 6-digit pincode for this area.";
+    else if (!/^\d{6}$/.test(trimmedPincode)) newErrors.pincode = "Pincode must contain exactly 6 digits.";
+
+    if (category === "other") {
+      if (!trimmedCustomCategory) newErrors.customCategory = "Describe the issue category in a few words.";
+      else if (trimmedCustomCategory.length < REPORT_LIMITS.customCategoryMin) newErrors.customCategory = `Category must be at least ${REPORT_LIMITS.customCategoryMin} characters.`;
+      else if (trimmedCustomCategory.length > REPORT_LIMITS.customCategoryMax) newErrors.customCategory = `Category must be ${REPORT_LIMITS.customCategoryMax} characters or fewer.`;
+    }
+
+    if (trimmedLocationName.length > REPORT_LIMITS.locationNameMax) newErrors.locationName = `Landmark must be ${REPORT_LIMITS.locationNameMax} characters or fewer.`;
+    if (trimmedSummary.length > REPORT_LIMITS.summaryMax) newErrors.summary = `Description must be ${REPORT_LIMITS.summaryMax} characters or fewer.`;
+    if (photo) {
+      if (!allowedPhotoTypes.includes(photo.type)) newErrors.photo = "Upload a JPG, PNG, or WebP image.";
+      else if (photo.size > REPORT_LIMITS.photoMaxBytes) newErrors.photo = "Photo must be 5 MB or smaller.";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      setMessage("Please resolve the highlighted errors in the form.");
+      setMessage("Please fix the highlighted fields before submitting.");
       return;
     }
 
@@ -95,16 +148,16 @@ export default function ReportPage() {
         p_reporter_name: "Citizen",
         p_reporter_mobile: "",
         p_category: category,
-        p_subcategory: category === "other" ? customCategory.trim() : null,
-        p_summary: title.trim(),
-        p_description: summary.trim() || "",
+        p_subcategory: category === "other" ? trimmedCustomCategory : null,
+        p_summary: trimmedTitle,
+        p_description: trimmedSummary || "",
         p_state: state.trim(),
         p_district: district.trim() || null,
-        p_town_village: townVillage.trim(),
-        p_pincode: pincode.trim(),
+        p_town_village: trimmedTownVillage,
+        p_pincode: trimmedPincode,
         p_photo_url: null,
         p_video_url: null,
-        p_additional_location_detail: locationName.trim() || null
+        p_additional_location_detail: trimmedLocationName || null
       });
 
       if (error) throw error;
@@ -123,7 +176,6 @@ export default function ReportPage() {
 
       const successMessage = `Report ${publicId} submitted for review. It is private until an admin verifies it.`;
       setMessage(successMessage);
-      window.alert(successMessage);
       setTitle("");
       setState("Maharashtra");
       setDistrict("Pune");
@@ -163,7 +215,15 @@ export default function ReportPage() {
           <h2 className="border-b border-slate-100 pb-3 text-lg font-black text-slate-900">1. Issue information</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Field label="Issue Title / Summary *" error={errors.title} className="md:col-span-2">
-              <input className={cn(inputClassName, errors.title && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Unfinished road bridge causing safety risk" />
+              <input
+                aria-invalid={Boolean(errors.title)}
+                className={cn(inputClassName, errors.title && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                maxLength={REPORT_LIMITS.titleMax}
+                value={title}
+                onChange={(event) => setFieldValue("title", setTitle, event.target.value)}
+                placeholder="e.g. Unfinished road bridge causing safety risk"
+              />
+              <span className="text-xs font-bold text-slate-400">{title.trim().length}/{REPORT_LIMITS.titleMax} characters</span>
             </Field>
 
             <Field label="Category / Topic *">
@@ -180,7 +240,14 @@ export default function ReportPage() {
 
             {category === "other" ? (
               <Field label="Describe category *" error={errors.customCategory}>
-                <input className={cn(inputClassName, errors.customCategory && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")} value={customCategory} onChange={(event) => setCustomCategory(event.target.value)} placeholder="Describe this topic" />
+                <input
+                  aria-invalid={Boolean(errors.customCategory)}
+                  className={cn(inputClassName, errors.customCategory && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                  maxLength={REPORT_LIMITS.customCategoryMax}
+                  value={customCategory}
+                  onChange={(event) => setFieldValue("customCategory", setCustomCategory, event.target.value)}
+                  placeholder="Describe this topic"
+                />
               </Field>
             ) : null}
           </div>
@@ -206,16 +273,38 @@ export default function ReportPage() {
             </Field>
 
             <Field label="Town / Village / Ward *" error={errors.townVillage}>
-              <input className={cn(inputClassName, errors.townVillage && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")} value={townVillage} onChange={(event) => setTownVillage(event.target.value)} placeholder="e.g. Baner, Indiranagar, Rohini" />
+              <input
+                aria-invalid={Boolean(errors.townVillage)}
+                className={cn(inputClassName, errors.townVillage && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                maxLength={REPORT_LIMITS.townVillageMax}
+                value={townVillage}
+                onChange={(event) => setFieldValue("townVillage", setTownVillage, event.target.value)}
+                placeholder="e.g. Baner, Indiranagar, Rohini"
+              />
             </Field>
 
             <Field label="Pincode *" error={errors.pincode}>
-              <input className={cn(inputClassName, errors.pincode && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")} value={pincode} onChange={(event) => setPincode(event.target.value)} placeholder="Enter 6-digit pincode" />
+              <input
+                aria-invalid={Boolean(errors.pincode)}
+                className={cn(inputClassName, errors.pincode && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                inputMode="numeric"
+                maxLength={6}
+                value={pincode}
+                onChange={(event) => setFieldValue("pincode", setPincode, event.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="Enter 6-digit pincode"
+              />
             </Field>
 
             {mode === "detailed" ? (
-              <Field label="Specific landmark / road" className="md:col-span-2">
-                <input className={inputClassName} value={locationName} onChange={(event) => setLocationName(event.target.value)} placeholder="e.g. Near Indiranagar Metro Station" />
+              <Field label="Specific landmark / road" error={errors.locationName} className="md:col-span-2">
+                <input
+                  aria-invalid={Boolean(errors.locationName)}
+                  className={cn(inputClassName, errors.locationName && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                  maxLength={REPORT_LIMITS.locationNameMax}
+                  value={locationName}
+                  onChange={(event) => setFieldValue("locationName", setLocationName, event.target.value)}
+                  placeholder="e.g. Near Indiranagar Metro Station"
+                />
               </Field>
             ) : null}
           </div>
@@ -225,15 +314,33 @@ export default function ReportPage() {
           <h2 className="border-b border-slate-100 pb-3 text-lg font-black text-slate-900">3. Evidence and context</h2>
           <div className="grid grid-cols-1 gap-6">
             {mode === "detailed" ? (
-              <Field label="Detailed description / notes">
-                <textarea rows={5} className={cn(inputClassName, "resize-none")} value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Provide any additional details, repeated history, or evidence notes." />
+              <Field label="Detailed description / notes" error={errors.summary}>
+                <textarea
+                  aria-invalid={Boolean(errors.summary)}
+                  rows={5}
+                  className={cn(inputClassName, "resize-none", errors.summary && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                  maxLength={REPORT_LIMITS.summaryMax}
+                  value={summary}
+                  onChange={(event) => setFieldValue("summary", setSummary, event.target.value)}
+                  placeholder="Provide any additional details, repeated history, or evidence notes."
+                />
+                <span className="text-xs font-bold text-slate-400">{summary.trim().length}/{REPORT_LIMITS.summaryMax} characters</span>
               </Field>
             ) : null}
 
-            <Field label="Photo evidence">
+            <Field label="Photo evidence" error={errors.photo}>
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4">
                 <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400"><Camera size={14} /> Stored privately before review</div>
-                <input type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm font-semibold text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2.5 file:text-xs file:font-black file:text-slate-700 hover:file:bg-slate-100" onChange={(event) => setPhoto(event.target.files?.[0] ?? null)} />
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="w-full text-sm font-semibold text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2.5 file:text-xs file:font-black file:text-slate-700 hover:file:bg-slate-100"
+                  onChange={(event) => {
+                    setPhoto(event.target.files?.[0] ?? null);
+                    clearError("photo");
+                  }}
+                />
+                <p className="mt-3 text-xs font-bold text-slate-400">JPG, PNG, or WebP. Maximum 5 MB.</p>
               </div>
             </Field>
           </div>

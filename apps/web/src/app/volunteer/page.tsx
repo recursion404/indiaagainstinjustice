@@ -4,22 +4,80 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Users2, Mail, Award, CheckCircle2 } from "lucide-react";
 
+const VOLUNTEER_LIMITS = {
+  nameMin: 2,
+  nameMax: 80,
+  emailMax: 254,
+  messageMax: 800
+};
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function VolunteerPage() {
   const [values, setValues] = useState({ name: "", email: "", interest: "Report verification", message: "" });
   const [message, setMessage] = useState("Help review reports, verify outcomes and document recurring traffic points.");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
+  function update(field: keyof typeof values, value: string) {
+    setValues((current) => ({ ...current, [field]: value }));
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function validate() {
+    const nextErrors: Record<string, string> = {};
+    const name = values.name.trim();
+    const email = values.email.trim();
+    const note = values.message.trim();
+
+    if (!name) nextErrors.name = "Enter your full name.";
+    else if (name.length < VOLUNTEER_LIMITS.nameMin) nextErrors.name = `Name must be at least ${VOLUNTEER_LIMITS.nameMin} characters.`;
+    else if (name.length > VOLUNTEER_LIMITS.nameMax) nextErrors.name = `Name must be ${VOLUNTEER_LIMITS.nameMax} characters or fewer.`;
+
+    if (!email) nextErrors.email = "Enter an email address so we can contact you.";
+    else if (email.length > VOLUNTEER_LIMITS.emailMax) nextErrors.email = "Email address is too long.";
+    else if (!emailPattern.test(email)) nextErrors.email = "Enter a valid email address, for example name@example.com.";
+
+    if (!values.interest.trim()) nextErrors.interest = "Choose how you want to help.";
+    if (note.length > VOLUNTEER_LIMITS.messageMax) nextErrors.message = `Introduction must be ${VOLUNTEER_LIMITS.messageMax} characters or fewer.`;
+
+    return nextErrors;
+  }
+
   async function submit() {
-    if (!values.name.trim() || !values.email.trim()) {
-      setMessage("Please fill out your Name and Email address.");
+    const nextErrors = validate();
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      setMessage("Please fix the highlighted fields before submitting.");
       return;
     }
+
+    setErrors({});
     setBusy(true);
-    const { data } = await supabase.auth.getSession();
-    const { error } = await supabase.from("volunteer_requests").insert({ ...values, user_id: data.session?.user.id ?? null });
-    setMessage(error ? error.message : "Thank you! Your volunteer application has been submitted successfully.");
-    if (!error) setValues({ name: "", email: "", interest: "Report verification", message: "" });
-    setBusy(false);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const payload = {
+        name: values.name.trim(),
+        email: values.email.trim().toLowerCase(),
+        interest: values.interest.trim(),
+        message: values.message.trim(),
+        user_id: data.session?.user.id ?? null
+      };
+      const { error } = await supabase.from("volunteer_requests").insert(payload);
+      if (error) throw error;
+
+      setMessage("Thank you! Your volunteer application has been submitted successfully.");
+      setValues({ name: "", email: "", interest: "Report verification", message: "" });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to submit volunteer application.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -70,31 +128,38 @@ export default function VolunteerPage() {
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Full Name *</label>
                 <input
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all"
+                  aria-invalid={Boolean(errors.name)}
+                  className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all focus:ring-2 ${errors.name ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
+                  maxLength={VOLUNTEER_LIMITS.nameMax}
                   value={values.name}
-                  onChange={(event) => setValues({ ...values, name: event.target.value })}
+                  onChange={(event) => update("name", event.target.value)}
                   placeholder="Rahul Patil"
                 />
+                {errors.name ? <span className="text-xs font-bold text-rose-600">{errors.name}</span> : null}
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Email Address *</label>
                 <input
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all"
+                  aria-invalid={Boolean(errors.email)}
+                  className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all focus:ring-2 ${errors.email ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
+                  maxLength={VOLUNTEER_LIMITS.emailMax}
                   type="email"
                   value={values.email}
-                  onChange={(event) => setValues({ ...values, email: event.target.value })}
+                  onChange={(event) => update("email", event.target.value)}
                   placeholder="rahul@domain.com"
                 />
+                {errors.email ? <span className="text-xs font-bold text-rose-600">{errors.email}</span> : null}
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
               <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">I can help with</label>
               <select
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-slate-800 font-semibold text-sm transition-all bg-white"
+                aria-invalid={Boolean(errors.interest)}
+                className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 font-semibold text-sm transition-all bg-white focus:ring-2 ${errors.interest ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
                 value={values.interest}
-                onChange={(event) => setValues({ ...values, interest: event.target.value })}
+                onChange={(event) => update("interest", event.target.value)}
               >
                 <option>Report verification</option>
                 <option>Traffic photography</option>
@@ -102,17 +167,24 @@ export default function VolunteerPage() {
                 <option>Content and research</option>
                 <option>Community outreach</option>
               </select>
+              {errors.interest ? <span className="text-xs font-bold text-rose-600">{errors.interest}</span> : null}
             </div>
 
             <div className="flex flex-col gap-2">
               <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Introduce Yourself</label>
               <textarea
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all"
+                aria-invalid={Boolean(errors.message)}
+                className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all focus:ring-2 ${errors.message ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
+                maxLength={VOLUNTEER_LIMITS.messageMax}
                 rows={4}
                 value={values.message}
-                onChange={(event) => setValues({ ...values, message: event.target.value })}
+                onChange={(event) => update("message", event.target.value)}
                 placeholder="Tell us a little bit about your interest, background, or neighborhood..."
               />
+              <div className="flex justify-between gap-3 text-xs font-bold">
+                {errors.message ? <span className="text-rose-600">{errors.message}</span> : <span />}
+                <span className="ml-auto text-slate-400">{values.message.trim().length}/{VOLUNTEER_LIMITS.messageMax}</span>
+              </div>
             </div>
 
             <button
