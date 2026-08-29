@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Badge, Card, PageShell, SectionHeader, StatCard } from "@/components/ui";
-import { getPublicIssueBySlug } from "@/lib/data";
+import { categoryLabel, getPublicIssueBySlug } from "@/lib/data";
 import { siteConfig } from "@/lib/site";
 import IssueActions from "./IssueActions";
+import { IssueComments } from "./IssueComments";
 
 type IssuePageProps = {
   params: {
@@ -43,13 +44,11 @@ export default async function IssuePage({ params }: IssuePageProps) {
   }
 
   const publicUrl = `${siteConfig.url}/issues/${issue.slug}`;
-  const detail = issue as Record<string, unknown>;
   const locationParts = [
-    detail.ward,
-    detail.village,
-    detail.town,
-    detail.district,
-    detail.state,
+    issue.locationName,
+    issue.townVillage,
+    issue.district,
+    issue.state,
   ].filter(Boolean);
 
   const jsonLd = {
@@ -83,7 +82,7 @@ export default async function IssuePage({ params }: IssuePageProps) {
         <div className="space-y-6">
           <Card className="space-y-5">
             <div className="flex flex-wrap items-center gap-3">
-              <Badge tone="orange">{issue.category}</Badge>
+              <Badge tone="orange">{categoryLabel(issue.category)}</Badge>
               {issue.customCategory ? <Badge tone="slate">{issue.customCategory}</Badge> : null}
               <Badge tone="green">{issue.status.replaceAll("_", " ")}</Badge>
             </div>
@@ -98,11 +97,11 @@ export default async function IssuePage({ params }: IssuePageProps) {
                 Location
               </h2>
               <p className="mt-3 text-lg font-bold text-slate-900">
-                {locationParts.length > 0 ? locationParts.join(", ") : "India"}
+              {locationParts.length > 0 ? locationParts.join(", ") : "India"}
               </p>
-              {detail.pincode ? (
+              {issue.pincode ? (
                 <p className="mt-1 text-sm font-semibold text-slate-500">
-                  Pincode: {String(detail.pincode)}
+                  Pincode: {issue.pincode}
                 </p>
               ) : null}
             </div>
@@ -114,6 +113,8 @@ export default async function IssuePage({ params }: IssuePageProps) {
             </h2>
             <p className="text-lg leading-8 text-slate-700">{issue.summary}</p>
           </Card>
+
+          <IssueComments issueId={issue.id} />
         </div>
 
         <aside className="space-y-6">

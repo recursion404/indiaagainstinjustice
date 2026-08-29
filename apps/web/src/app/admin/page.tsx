@@ -5,7 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { IssueStatus } from "@citizens-first/shared";
 import { addIssueUpdate, getAdminIssues, type AdminIssue, updateIssueModeration } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
-import { ShieldAlert, UserCheck, ShieldCheck, Mail, Search, ArrowRight, Settings } from "lucide-react";
+import { AlertCircle, CheckCircle2, ShieldAlert, UserCheck, ShieldCheck, Mail, Search, Settings, X } from "lucide-react";
 
 const statuses: IssueStatus[] = [
   "submitted",
@@ -24,6 +24,17 @@ const statuses: IssueStatus[] = [
   "reopened"
 ];
 
+const AUTH_TIMEOUT_MS = 15000;
+
+function withTimeout<T>(promise: PromiseLike<T>, message: string, timeoutMs = AUTH_TIMEOUT_MS) {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_resolve, reject) => {
+      window.setTimeout(() => reject(new Error(message)), timeoutMs);
+    }),
+  ]);
+}
+
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -33,6 +44,11 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("Admin access requires an authorized account.");
+  const [moderationNotice, setModerationNotice] = useState<{
+    tone: "success" | "error" | "info";
+    title: string;
+    detail: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Superadmin States
@@ -41,31 +57,106 @@ export default function AdminPage() {
   const [promoting, setPromoting] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); if (data.session) void loadAdmin(data.session); });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => { setSession(nextSession); if (nextSession) void loadAdmin(nextSession); });
-    return () => listener.subscription.unsubscribe();
+    let cancelled = false;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      setSession(data.session);
+      if (data.session) void loadAdmin(data.session);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      if (!nextSession) {
+        setRole(null);
+        setIssues([]);
+        setSelected(null);
+        return;
+      }
+
+      window.setTimeout(() => {
+        if (!cancelled) void loadAdmin(nextSession);
+      }, 0);
+    });
+
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   async function loadAdmin(activeSession = session, activeFilter = filter) {
-    if (!activeSession) return;
-    const { data, error } = await supabase.from("profiles").select("role").eq("id", activeSession.user.id).single();
-    if (error) return setMessage("Your profile could not be loaded.");
-    setRole(data.role);
-    if (data.role !== "admin" && data.role !== "superadmin") return setMessage("This account is not authorized.");
+    if (!activeSession) {
+      setRole(null);
+      setIssues([]);
+      setSelected(null);
+      return false;
+    }
     try {
-      const nextIssues = await getAdminIssues(activeFilter === "all" ? undefined : activeFilter);
+      const { data, error } = await withTimeout(
+        supabase.from("profiles").select("role").eq("id", activeSession.user.id).single(),
+        "Your profile check is taking too long. Please check the Supabase project connection and try again."
+      );
+      if (error) {
+        setRole(null);
+        setMessage(`Your profile could not be loaded: ${error.message}`);
+        return false;
+      }
+
+      setRole(data.role);
+      if (data.role !== "admin" && data.role !== "superadmin") {
+        setMessage("This account is signed in, but it is not authorized for the admin workspace.");
+        return false;
+      }
+
+      const nextIssues = await withTimeout(
+        getAdminIssues(activeFilter === "all" ? undefined : activeFilter),
+        "The moderation queue is taking too long to load. Please retry in a moment."
+      );
       setIssues(nextIssues);
       setSelected((current) => current ? nextIssues.find((issue) => issue.id === current.id) ?? current : nextIssues[0] ?? null);
       setMessage(`${nextIssues.length} reports in the moderation queue.`);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to load moderation queue."); }
+      return true;
+    } catch (error) {
+      setRole(null);
+      setMessage(error instanceof Error ? error.message : "Unable to load moderation queue.");
+      return false;
+    }
   }
 
   async function signIn() {
+    if (!email.trim() || !password.trim()) {
+      setMessage("Please enter both admin email and password.");
+      return;
+    }
+
     setBusy(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error) setMessage(error.message);
-    else await loadAdmin(data.session, filter);
-    setBusy(false);
+    setMessage("Signing in securely...");
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: email.trim(), password }),
+        "Sign-in is taking too long. Please check your internet connection, Supabase Auth settings, or try again."
+      );
+
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      if (!data.session) {
+        setMessage("Sign-in did not return a session. If email confirmation is enabled, verify the email and try again.");
+        return;
+      }
+
+      setSession(data.session);
+      setMessage("Checking admin permissions...");
+      const loaded = await loadAdmin(data.session, filter);
+      if (!loaded) return;
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to sign in. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function signOut() { await supabase.auth.signOut(); setRole(null); setIssues([]); setSelected(null); }
@@ -145,14 +236,30 @@ export default function AdminPage() {
               />
             </div>
             <button
-              className="w-full px-6 py-3.5 text-sm font-black text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 rounded-xl shadow-lg transition-all"
+              className="w-full px-6 py-3.5 text-sm font-black text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 rounded-xl shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-70"
               type="button"
               disabled={busy}
               onClick={signIn}
             >
               {busy ? "Signing in..." : "Sign in to Dashboard"}
             </button>
-            <p className="text-xs font-bold text-center text-slate-400 mt-2">{message}</p>
+            <div
+              className={`rounded-xl border px-4 py-3 text-center text-xs font-extrabold ${
+                message.toLowerCase().includes("too long") ||
+                message.toLowerCase().includes("could not") ||
+                message.toLowerCase().includes("unable") ||
+                message.toLowerCase().includes("not authorized") ||
+                message.toLowerCase().includes("please enter") ||
+                message.toLowerCase().includes("did not return")
+                  ? "border-rose-100 bg-rose-50 text-rose-800"
+                  : busy
+                    ? "border-orange-100 bg-orange-50 text-orange-800"
+                    : "border-slate-100 bg-slate-50 text-slate-500"
+              }`}
+              role={busy ? "status" : "alert"}
+            >
+              {message}
+            </div>
           </section>
         )}
       </main>
@@ -162,8 +269,27 @@ export default function AdminPage() {
   async function saveModeration(values: Parameters<typeof updateIssueModeration>[1]) {
     if (!selected) return;
     setBusy(true);
-    try { await updateIssueModeration(selected.id, values); setMessage("Moderation decision saved."); await loadAdmin(); }
-    catch (error) { setMessage(error instanceof Error ? error.message : "Unable to save moderation decision."); }
+    setModerationNotice({
+      tone: "info",
+      title: "Saving moderation decision",
+      detail: "Applying the workflow status and review settings now."
+    });
+    try {
+      const savedIssue = await updateIssueModeration(selected.id, values);
+      await loadAdmin();
+      setModerationNotice({
+        tone: "success",
+        title: "Moderation decision saved",
+        detail: `${savedIssue.publicId} is now marked as ${savedIssue.status.replaceAll("_", " ")}.`
+      });
+    }
+    catch (error) {
+      setModerationNotice({
+        tone: "error",
+        title: "Could not save moderation decision",
+        detail: error instanceof Error ? error.message : "Something went wrong while saving this report."
+      });
+    }
     finally { setBusy(false); }
   }
 
@@ -190,6 +316,39 @@ export default function AdminPage() {
           Sign Out
         </button>
       </div>
+
+      {moderationNotice ? (
+        <div
+          className={`flex items-start justify-between gap-4 rounded-2xl border p-4 shadow-sm ${
+            moderationNotice.tone === "success"
+              ? "border-emerald-100 bg-emerald-50 text-emerald-900"
+              : moderationNotice.tone === "error"
+                ? "border-rose-100 bg-rose-50 text-rose-900"
+                : "border-orange-100 bg-orange-50 text-orange-900"
+          }`}
+          role={moderationNotice.tone === "error" ? "alert" : "status"}
+        >
+          <div className="flex gap-3">
+            {moderationNotice.tone === "success" ? (
+              <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} />
+            ) : (
+              <AlertCircle className={`mt-0.5 shrink-0 ${moderationNotice.tone === "error" ? "text-rose-600" : "text-orange-600"}`} size={20} />
+            )}
+            <div>
+              <p className="text-sm font-black">{moderationNotice.title}</p>
+              <p className="mt-1 text-sm font-semibold opacity-80">{moderationNotice.detail}</p>
+            </div>
+          </div>
+          <button
+            className="rounded-full p-1 opacity-60 transition hover:bg-white/70 hover:opacity-100"
+            onClick={() => setModerationNotice(null)}
+            title="Dismiss message"
+            type="button"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ) : null}
 
       {/* Superadmin Exclusive Management Controls */}
       {role === "superadmin" && (
@@ -314,7 +473,7 @@ export default function AdminPage() {
   );
 }
 
-function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: boolean; onSave: (values: Parameters<typeof updateIssueModeration>[1]) => void }) {
+function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: boolean; onSave: (values: Parameters<typeof updateIssueModeration>[1]) => Promise<void> }) {
   const [status, setStatus] = useState<IssueStatus>(issue.status);
   const [isPublic, setIsPublic] = useState(issue.isPublic);
   const [isSensitive, setIsSensitive] = useState(issue.isSensitive);
@@ -327,6 +486,18 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
   const [updateBody, setUpdateBody] = useState("");
   const [updatePublic, setUpdatePublic] = useState(true);
   const [updateMessage, setUpdateMessage] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const moderationValues = {
+    status,
+    isPublic,
+    isSensitive,
+    indexable,
+    authorityName,
+    authorityReference,
+    internalNotes,
+    rejectionReason,
+  };
 
   async function addUpdate() {
     if (!updateBody.trim()) return;
@@ -471,15 +642,88 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
           </label>
         </div>
 
-        <button 
-          className="w-full px-6 py-3 text-sm font-black text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md transition-all cursor-pointer" 
+        <button
+          className="w-full px-6 py-3 text-sm font-black text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           type="button" 
           disabled={busy} 
-          onClick={() => onSave({ status, isPublic, isSensitive, indexable, authorityName, authorityReference, internalNotes, rejectionReason })}
+          onClick={() => setConfirmOpen(true)}
         >
-          Save Moderation Decision
+          {busy ? "Saving Decision..." : "Save Moderation Decision"}
         </button>
       </div>
+
+      {confirmOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="moderation-confirm-title">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl shadow-slate-950/20">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center gap-1 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-orange-700">
+                  Review before saving
+                </span>
+                <h3 id="moderation-confirm-title" className="mt-4 text-xl font-black text-slate-950">
+                  Save this moderation decision?
+                </h3>
+                <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
+                  This will update the report workflow status and moderation settings for {issue.publicId}.
+                </p>
+              </div>
+              <button
+                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                onClick={() => setConfirmOpen(false)}
+                title="Close confirmation"
+                type="button"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-slate-400">Current status</span>
+                <strong className="text-right text-slate-900">{issue.status.replaceAll("_", " ")}</strong>
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <span className="text-slate-400">New status</span>
+                <strong className="text-right text-orange-700">{status.replaceAll("_", " ")}</strong>
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <span className="text-slate-400">Public page</span>
+                <strong className="text-right text-slate-900">{isPublic ? "Allowed after review" : "Hidden"}</strong>
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-4">
+                <span className="text-slate-400">Search indexing</span>
+                <strong className="text-right text-slate-900">{indexable ? "Allowed" : "Blocked"}</strong>
+              </div>
+              {isSensitive ? (
+                <p className="mt-4 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-extrabold text-rose-700">
+                  Sensitive report is enabled. Please confirm public details are safe before saving.
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                onClick={() => setConfirmOpen(false)}
+                type="button"
+              >
+                Review again
+              </button>
+              <button
+                className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg shadow-slate-950/10 transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={busy}
+                onClick={async () => {
+                  setConfirmOpen(false);
+                  await onSave(moderationValues);
+                }}
+                type="button"
+              >
+                Confirm and save
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <hr className="border-slate-100" />
 

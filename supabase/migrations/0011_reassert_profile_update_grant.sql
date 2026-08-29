@@ -1,0 +1,14 @@
+-- Reassert table-level UPDATE privileges on profiles for authenticated users.
+--
+-- Context:
+-- - RLS remains enabled on public.profiles.
+-- - The superadmin profile-management policy from 0006_add_superadmin_role.sql
+--   still controls who can actually update profile rows.
+-- - This grant is required because PostgreSQL checks table privileges before
+--   evaluating RLS policies. Without it, a superadmin can still receive 42501
+--   permission errors before the RLS policy has a chance to allow the update.
+--
+-- This intentionally repeats the grant from 0008_grant_update_on_profiles.sql
+-- so the manual dashboard fix is documented and safe to replay on the new
+-- Supabase project.
+GRANT UPDATE ON public.profiles TO authenticated;

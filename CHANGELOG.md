@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-08-29 - Public Issue Detail Pages and Comments
+
+- Replaced UUID-prefix issue URLs with SEO-friendly slugs that include the issue title, location, and public ID.
+- Kept legacy `report-[uuid-prefix]` public issue links resolving for backwards compatibility.
+- Added a public issue comments UI on each issue detail page.
+- Added migration `20260829054423_0013_create_issue_comments.sql` so anyone can read comments on public issues, while only signed-in users can post comments as themselves.
+- Aligned the local comments migration filename with the remote Supabase migration version so `supabase db push` no longer reports missing remote migration `20260829054423`.
+- Fixed issue detail location rendering to use the current report fields instead of legacy traffic-only fields.
+
+## 2026-08-29 - Public Published Issue Visibility
+
+- Fixed public issue visibility for reports marked `published` from the admin moderation workflow.
+- Added migration `0012_sync_public_report_status_policy.sql` to include `published` in the public RLS read policy while preserving the existing public statuses.
+- Updated website public issue queries so `published` reports are treated as public alongside `verified`, `action_started`, `action_taken`, and `closed`.
+- Confirmed the affected report `IAI-39cb6137` was saved as `published`, but hidden by the previous public read policy.
+
+## 2026-08-28 - Admin Sign-In Timeout Feedback
+
+- Added a 15-second timeout guard around admin sign-in, profile role checks, and moderation queue loading so pending Supabase requests no longer leave the UI stuck on `Signing in...`.
+- Added clearer admin sign-in status and error panels for missing credentials, timeout, failed profile lookup, missing session, unauthorized account, and queue loading failures.
+- Made the admin loader return an explicit success/failure result so sign-in always clears loading state even when profile or queue loading fails after authentication succeeds.
+- Kept the existing Supabase authentication flow unchanged; this is a UX and recovery improvement around slow or blocked network responses.
+- Verified the web production build succeeds with `npm run build` from `apps/web`.
+
+## 2026-08-28 - Admin Moderation Save Feedback
+
+- Added a custom confirmation dialog before `Save Moderation Decision` so admins can review the status/public/indexing changes before applying them.
+- Added visible in-page moderation notices for saving, success, and error states so updates no longer feel silent.
+- Included the saved report public ID and new workflow status in the success acknowledgement.
+- Verified the web production build succeeds with `npm run build` from `apps/web`.
+
+## 2026-08-28 - Profile Update Grant Migration
+
+- Added migration `0011_reassert_profile_update_grant.sql` to document and replay `GRANT UPDATE ON public.profiles TO authenticated;`.
+- Confirmed the existing migration chain already had superadmin RLS support in `0006`, profile update privileges in `0008`, report/public record mutation privileges in `0009`, and expanded report statuses in `0010`.
+- Documented why the grant matters: PostgreSQL requires table-level privileges before RLS policies can permit a superadmin profile update.
+
+## 2026-08-28 - Website Auth Navigation Restoration
+
+- Restored global website authentication controls after the redesign changed `Navigation` into static links only.
+- Reintroduced the signed-out `Sign in` link, signed-in profile badge, logout control, and admin dashboard link for admin/superadmin profiles.
+- Kept `Navigation` as a links-only fragment inside the existing root layout header so the previous duplicate-header regression does not return.
+- Verified the web production build succeeds with `npm run build` from `apps/web`.
+
 ## 2026-08-28 - Firebase App Hosting Web Structure
 
 - Added `apps/web/apphosting.yaml` so Firebase App Hosting can read the web backend config from the same app-root pattern used by `abod-app`.

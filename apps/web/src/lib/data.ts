@@ -26,13 +26,37 @@ export type WebsiteIssue = PublicIssue & {
 const issueFields =
   "id, public_id, reporter_id, summary, category, subcategory, status, state, district, town_village, description, additional_location_detail, pincode, rejection_reason, created_at, updated_at";
 
+const publicIssueStatuses = [
+  "verified",
+  "published",
+  "action_started",
+  "action_taken",
+  "closed"
+] as const;
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+function issueSlug(row: Record<string, any>) {
+  const title = row.summary || row.category || "public-issue";
+  const location = row.town_village || row.district || row.state || "india";
+  const publicId = String(row.public_id || "").toLowerCase();
+  return `${slugify(`${title} ${location}`)}-${publicId}`;
+}
+
 function mapIssue(row: Record<string, any>): WebsiteIssue {
   const publicId = row.public_id;
   return {
     id: row.id,
     publicId: publicId,
-    title: row.summary,
-    slug: `report-${row.id.substring(0, 8)}`,
+    title: row.summary || categoryLabel(row.category),
+    slug: issueSlug(row),
     category: row.category,
     customCategory: row.subcategory ?? null,
     status: row.status,
@@ -52,7 +76,7 @@ function mapIssue(row: Record<string, any>): WebsiteIssue {
     commentCount: 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? null,
-    isPublic: ["verified", "action_started", "action_taken", "closed"].includes(row.status),
+    isPublic: publicIssueStatuses.includes(row.status),
     isSensitive: false,
     indexable: true,
     privateAddress: null,
@@ -71,7 +95,7 @@ export async function getPublicIssues(limit = 50) {
   const { data, error } = await supabase
     .from("reports")
     .select(issueFields)
-    .in("status", ["verified", "action_started", "action_taken", "closed"])
+    .in("status", publicIssueStatuses)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -80,17 +104,34 @@ export async function getPublicIssues(limit = 50) {
 }
 
 export async function getPublicIssueBySlug(slug: string) {
-  // Extracting report UUID prefix from the customized slug `report-[first_8_chars]`
-  const prefix = slug.replace("report-", "");
-  const { data, error } = await supabase
-    .from("reports")
-    .select(issueFields)
-    .in("status", ["verified", "action_started", "action_taken", "closed"])
-    .like("id", `${prefix}%`)
-    .maybeSingle();
+  const publicIdMatch = slug.match(/(iai-[a-z0-9]+)$/i);
+  const legacyUuidPrefix = slug.startsWith("report-") ? slug.replace("report-", "") : null;
 
-  if (error) throw error;
-  return data ? mapIssue(data) : null;
+  if (publicIdMatch) {
+    const { data, error } = await supabase
+      .from("reports")
+      .select(issueFields)
+      .in("status", publicIssueStatuses)
+      .ilike("public_id", publicIdMatch[1])
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? mapIssue(data) : null;
+  }
+
+  if (legacyUuidPrefix) {
+    const { data, error } = await supabase
+      .from("reports")
+      .select(issueFields)
+      .in("status", publicIssueStatuses)
+      .limit(1000);
+
+    if (error) throw error;
+    const row = (data ?? []).find((issue) => String(issue.id).startsWith(legacyUuidPrefix));
+    return row ? mapIssue(row) : null;
+  }
+
+  return null;
 }
 
 export async function getPublicIssueUpdates(issueId: string) {
