@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>India Against Injustice app icon</title>
+  <defs>
+    <linearGradient id="saffron" x1="72" y1="72" x2="440" y2="440" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff6b00"/>
+      <stop offset="1" stop-color="#ffb21a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#fff8f0"/>
+  <circle cx="256" cy="256" r="178" fill="url(#saffron)"/>
+  <path d="M256 106 378 158v91c0 78-49 133-122 158-73-25-122-80-122-158v-91l122-52Z" fill="#fff"/>
+  <path d="M256 145 344 183v66c0 55-34 94-88 116-54-22-88-61-88-116v-66l88-38Z" fill="#0f172a"/>
+  <path d="M256 177c13 0 23 10 23 23v68c0 13-10 23-23 23s-23-10-23-23v-68c0-13 10-23 23-23Z" fill="#fff8f0"/>
+  <circle cx="256" cy="326" r="24" fill="#fff8f0"/>
+</svg>

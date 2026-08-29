@@ -1,11 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { IssueStatus } from "@citizens-first/shared";
-import { addIssueUpdate, getAdminIssues, type AdminIssue, updateIssueModeration } from "@/lib/data";
+import { addIssueUpdate, getAdminIssues, getRecentIssueUpdates, type AdminIssue, type AdminIssueUpdate, updateIssueModeration } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
-import { AlertCircle, CheckCircle2, ShieldAlert, UserCheck, ShieldCheck, Mail, Search, Settings, X } from "lucide-react";
+import {
+  AlertCircle,
+  BarChart3,
+  Bell,
+  CheckCircle2,
+  Clock3,
+  FileText,
+  Gauge,
+  LayoutDashboard,
+  ListChecks,
+  Mail,
+  Menu,
+  MoreVertical,
+  RefreshCw,
+  Search,
+  Settings,
+  ShieldAlert,
+  ShieldCheck,
+  UserCheck,
+  X
+} from "lucide-react";
 
 const statuses: IssueStatus[] = [
   "submitted",
@@ -35,12 +55,31 @@ function withTimeout<T>(promise: PromiseLike<T>, message: string, timeoutMs = AU
   ]);
 }
 
+function statusLabel(status: string) {
+  return status.replaceAll("_", " ");
+}
+
+function formatShortDate(value: string | null) {
+  if (!value) return "Not dated";
+  return new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short" }).format(new Date(value));
+}
+
+function countByStatus(issues: AdminIssue[], status: IssueStatus) {
+  return issues.filter((issue) => issue.status === status).length;
+}
+
+function csvCell(value: string | number | null | undefined) {
+  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+}
+
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [issues, setIssues] = useState<AdminIssue[]>([]);
+  const [recentUpdates, setRecentUpdates] = useState<AdminIssueUpdate[]>([]);
   const [selected, setSelected] = useState<AdminIssue | null>(null);
   const [filter, setFilter] = useState<"all" | IssueStatus>("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("Admin access requires an authorized account.");
@@ -85,7 +124,7 @@ export default function AdminPage() {
     };
   }, []);
 
-  async function loadAdmin(activeSession = session, activeFilter = filter) {
+  async function loadAdmin(activeSession = session) {
     if (!activeSession) {
       setRole(null);
       setIssues([]);
@@ -109,12 +148,16 @@ export default function AdminPage() {
         return false;
       }
 
-      const nextIssues = await withTimeout(
-        getAdminIssues(activeFilter === "all" ? undefined : activeFilter),
+      const [nextIssues, nextUpdates] = await withTimeout(
+        Promise.all([
+          getAdminIssues(),
+          getRecentIssueUpdates().catch(() => [])
+        ]),
         "The moderation queue is taking too long to load. Please retry in a moment."
       );
       setIssues(nextIssues);
       setSelected((current) => current ? nextIssues.find((issue) => issue.id === current.id) ?? current : nextIssues[0] ?? null);
+      setRecentUpdates(nextUpdates);
       setMessage(`${nextIssues.length} reports in the moderation queue.`);
       return true;
     } catch (error) {
@@ -150,7 +193,7 @@ export default function AdminPage() {
 
       setSession(data.session);
       setMessage("Checking admin permissions...");
-      const loaded = await loadAdmin(data.session, filter);
+      const loaded = await loadAdmin(data.session);
       if (!loaded) return;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to sign in. Please try again.");
@@ -162,14 +205,17 @@ export default function AdminPage() {
   async function signOut() { await supabase.auth.signOut(); setRole(null); setIssues([]); setSelected(null); }
 
   async function promoteToAdmin() {
-    if (!promoteEmail.trim()) return setPromoteMessage("Please enter an email address.");
+    const normalizedEmail = promoteEmail.trim().toLowerCase();
+    if (!normalizedEmail) return setPromoteMessage("Please enter an email address.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return setPromoteMessage("Please enter a valid email address.");
+
     setPromoting(true);
     setPromoteMessage("");
     try {
       const { data: profile, error: findError } = await supabase
         .from("profiles")
         .select("id, role")
-        .eq("email", promoteEmail.trim().toLowerCase())
+        .eq("email", normalizedEmail)
         .maybeSingle();
 
       if (findError) throw findError;
@@ -189,7 +235,7 @@ export default function AdminPage() {
         .eq("id", profile.id);
 
       if (updateError) throw updateError;
-      setPromoteMessage(`Successfully promoted ${promoteEmail} to Administrator.`);
+      setPromoteMessage(`Successfully promoted ${normalizedEmail} to Administrator.`);
       setPromoteEmail("");
     } catch (error) {
       setPromoteMessage(error instanceof Error ? error.message : "Unable to promote user.");
@@ -293,183 +339,535 @@ export default function AdminPage() {
     finally { setBusy(false); }
   }
 
+  const submittedCount = countByStatus(issues, "submitted");
+  const reviewCount = countByStatus(issues, "under_review");
+  const publicCount = issues.filter((issue) => issue.isPublic).length;
+  const rejectedCount = issues.filter((issue) => ["rejected", "duplicate", "insufficient_information"].includes(issue.status)).length;
+  const activeCount = issues.filter((issue) => !["resolved", "rejected", "duplicate", "insufficient_information"].includes(issue.status)).length;
+  const publishedCount = countByStatus(issues, "published");
+  const actionCount = issues.filter((issue) => ["assigned", "action_started", "action_taken", "action_recorded"].includes(issue.status)).length;
+  const statusBars = [
+    { label: "New", value: submittedCount, color: "bg-orange-500" },
+    { label: "Review", value: reviewCount, color: "bg-amber-500" },
+    { label: "Public", value: publicCount, color: "bg-emerald-500" },
+    { label: "Action", value: actionCount, color: "bg-sky-500" },
+    { label: "Rejected", value: rejectedCount, color: "bg-rose-500" }
+  ];
+  const maxStatusValue = Math.max(...statusBars.map((item) => item.value), 1);
+  const publicConversion = issues.length ? Math.round((publicCount / issues.length) * 100) : 0;
+  const activityCount = issues.length + recentUpdates.length;
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const visibleIssues = issues.filter((issue) => {
+    const matchesFilter = filter === "all" || issue.status === filter;
+    if (!matchesFilter) return false;
+    if (!normalizedSearch) return true;
+
+    return [
+      issue.publicId,
+      issue.title,
+      issue.category,
+      issue.customCategory,
+      issue.status,
+      issue.state,
+      issue.district,
+      issue.townVillage,
+      issue.pincode,
+      issue.summary
+    ]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+  });
+  const mostActiveStage = statusBars.reduce((winner, item) => item.value > winner.value ? item : winner, statusBars[0]);
+
+  function exportVisibleIssues() {
+    const header = ["Public ID", "Title", "Status", "Category", "Town/Village", "District", "State", "Pincode", "Reported At"];
+    const rows = visibleIssues.map((issue) => [
+      issue.publicId,
+      issue.title,
+      statusLabel(issue.status),
+      statusLabel(issue.category),
+      issue.townVillage,
+      issue.district,
+      issue.state,
+      issue.pincode,
+      issue.createdAt
+    ]);
+    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `iai-admin-reports-${filter}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
-    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-        <div>
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-orange-50 text-orange-700 border border-orange-100 uppercase tracking-widest mb-3">
-            <ShieldCheck size={12} className="text-orange-600" /> Admin Workspace
-          </span>
-          <h1 className="text-3xl font-black text-slate-950 tracking-tight">
-            Moderation Queue
-          </h1>
-          <p className="text-slate-500 font-semibold mt-1">
-            Review detailed citizen reports, manage verification states, and assign resolving authorities.
-          </p>
-        </div>
-        <button 
-          className="px-5 py-2.5 text-xs font-black text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
-          type="button" 
-          onClick={signOut}
-        >
-          Sign Out
-        </button>
-      </div>
-
-      {moderationNotice ? (
-        <div
-          className={`flex items-start justify-between gap-4 rounded-2xl border p-4 shadow-sm ${
-            moderationNotice.tone === "success"
-              ? "border-emerald-100 bg-emerald-50 text-emerald-900"
-              : moderationNotice.tone === "error"
-                ? "border-rose-100 bg-rose-50 text-rose-900"
-                : "border-orange-100 bg-orange-50 text-orange-900"
-          }`}
-          role={moderationNotice.tone === "error" ? "alert" : "status"}
-        >
-          <div className="flex gap-3">
-            {moderationNotice.tone === "success" ? (
-              <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} />
-            ) : (
-              <AlertCircle className={`mt-0.5 shrink-0 ${moderationNotice.tone === "error" ? "text-rose-600" : "text-orange-600"}`} size={20} />
-            )}
-            <div>
-              <p className="text-sm font-black">{moderationNotice.title}</p>
-              <p className="mt-1 text-sm font-semibold opacity-80">{moderationNotice.detail}</p>
-            </div>
-          </div>
-          <button
-            className="rounded-full p-1 opacity-60 transition hover:bg-white/70 hover:opacity-100"
-            onClick={() => setModerationNotice(null)}
-            title="Dismiss message"
-            type="button"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      ) : null}
-
-      {/* Superadmin Exclusive Management Controls */}
-      {role === "superadmin" && (
-        <section className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-900/5 p-6 space-y-6">
-          <div className="border-b border-slate-100 pb-3 flex items-center gap-2">
-            <Settings className="text-orange-600" size={18} />
-            <div>
-              <h2 className="text-lg font-black text-slate-900">Superadmin System Settings</h2>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">Authorize Community Administrators</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-end gap-4 max-w-2xl">
-            <div className="flex flex-col gap-1.5 flex-1 w-full">
-              <label className="text-xs font-extrabold text-slate-700 uppercase">Citizen Account Email</label>
-              <div className="relative flex items-center">
-                <Mail className="absolute left-4 text-slate-400" size={16} />
-                <input
-                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 font-semibold text-sm transition-all"
-                  value={promoteEmail}
-                  onChange={(event) => setPromoteEmail(event.target.value)}
-                  placeholder="name@domain.com"
-                />
+    <main className="min-h-screen bg-[#f4f5f7] text-slate-950">
+      <div className="flex min-h-screen overflow-hidden bg-white">
+        <aside className="hidden w-[260px] shrink-0 flex-col border-r border-slate-200 bg-white p-6 lg:flex">
+          <div className="mb-7 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                <ShieldCheck size={19} />
+              </span>
+              <div>
+                <p className="text-lg font-black">IAI Admin</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{role}</p>
               </div>
             </div>
-            <button
-              className="px-6 py-3 text-sm font-black text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 rounded-xl shadow-md transition-all whitespace-nowrap inline-flex items-center gap-2 w-full md:w-auto justify-center"
-              type="button"
-              disabled={promoting}
-              onClick={promoteToAdmin}
-            >
-              <UserCheck size={16} /> {promoting ? "Promoting..." : "Promote to Admin"}
+            <button className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-500" onClick={() => setModerationNotice({ tone: "info", title: "Sidebar ready", detail: "Use the status filters below to narrow the moderation queue." })} type="button">
+              <Menu size={16} />
             </button>
           </div>
 
-          {promoteMessage && (
-            <div className={`p-4 rounded-xl border text-xs font-extrabold max-w-2xl ${
-              promoteMessage.toLowerCase().includes("successfully") 
-                ? "bg-emerald-50 border-emerald-100 text-emerald-800" 
-                : "bg-rose-50 border-rose-100 text-rose-800"
-            }`}>
-              {promoteMessage}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Primary Moderation Queue */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <section className="bg-white rounded-3xl border border-slate-100 shadow-xl p-6 flex flex-col gap-4 lg:col-span-1 h-fit">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase">Filter by Workflow</label>
-            <select 
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm bg-white"
-              value={filter} 
-              onChange={(event) => { 
-                const next = event.target.value as "all" | IssueStatus; 
-                setFilter(next); 
-                void loadAdmin(session, next); 
-              }}
-            >
-              <option value="all">All reports</option>
-              {statuses.map((status) => (
-                <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-              ))}
-            </select>
+          <div className="space-y-1 border-t border-slate-100 pt-5">
+            <AdminNavItem icon={<LayoutDashboard size={17} />} label="Dashboard" active />
+            <AdminNavItem icon={<ListChecks size={17} />} label="Moderation Queue" badge={issues.length} />
+            <AdminNavItem icon={<FileText size={17} />} label="Public Records" badge={publicCount} />
+            <AdminNavItem icon={<BarChart3 size={17} />} label="Analytics" />
+            {role === "superadmin" ? <AdminNavItem icon={<Settings size={17} />} label="System Settings" /> : null}
           </div>
 
-          <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-            {issues.map((issue) => (
-              <button 
-                className={`w-full text-left p-4 rounded-2xl border transition-all flex flex-col gap-2 ${
-                  selected?.id === issue.id 
-                    ? "border-orange-500 bg-orange-50/10 shadow-md shadow-orange-950/2" 
-                    : "border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200"
-                }`} 
-                type="button" 
-                key={issue.id} 
-                onClick={() => setSelected(issue)}
+          <div className="mt-6 space-y-1 border-t border-slate-100 pt-5">
+            {statuses.slice(0, 7).map((status) => (
+              <button
+                className={`flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-bold transition ${
+                  filter === status ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"
+                }`}
+                key={status}
+                onClick={() => {
+                  setFilter(status);
+                }}
+                type="button"
               >
-                <div className="flex justify-between items-center gap-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-slate-100 text-slate-700 border border-slate-200 uppercase">
-                    {issue.status.replaceAll("_", " ")}
-                  </span>
-                  <small className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                    {issue.publicId}
-                  </small>
-                </div>
-                <strong className="text-sm font-bold text-slate-900 line-clamp-1">
-                  {issue.title}
-                </strong>
-                <small className="text-xs font-semibold text-slate-400">
-                  {issue.townVillage}
-                </small>
+                <span className="capitalize">{statusLabel(status)}</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500">{countByStatus(issues, status)}</span>
               </button>
             ))}
+          </div>
 
-            {issues.length === 0 && (
-              <p className="text-sm font-semibold text-slate-400 text-center py-8">
-                No reports found in this filter.
-              </p>
+          <div className="mt-auto space-y-5">
+            <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-slate-950 p-5 text-white shadow-xl shadow-blue-950/20">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+                <ShieldAlert size={17} />
+              </span>
+              <p className="mt-5 text-sm font-black">Admin controls</p>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-blue-100">Moderate reports, publish public records, and manage civic accountability workflows.</p>
+            </div>
+            <button className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50" onClick={signOut} type="button">
+              <X size={17} />
+              Sign Out
+            </button>
+          </div>
+        </aside>
+
+        <section className="min-w-0 flex-1 bg-[#f4f5f7]">
+          <header className="flex min-h-[76px] flex-col gap-4 border-b border-slate-200 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between lg:px-8">
+            <div className="flex items-center gap-3">
+              <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 lg:hidden" onClick={() => setModerationNotice({ tone: "info", title: "Mobile dashboard", detail: "Use the filter dropdown and search field to navigate reports on smaller screens." })} type="button">
+                <Menu size={20} />
+              </button>
+              <div className="relative w-full min-w-0 md:w-[330px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+                <input
+                  className="h-11 w-full rounded-full border border-slate-200 bg-white pl-11 pr-16 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-500/10"
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search anything..."
+                  value={searchTerm}
+                />
+                <span className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-slate-200 px-2 py-1 text-[10px] font-black text-slate-400 sm:block">
+                  Ctrl K
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-blue-200 hover:text-blue-700" onClick={() => void loadAdmin(session)} title="Refresh dashboard" type="button">
+                <RefreshCw size={17} />
+              </button>
+              <button className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600" onClick={() => setModerationNotice({ tone: "info", title: "Recent activity", detail: `${recentUpdates.length} recent public action updates are loaded in the activity widget.` })} type="button">
+                <Bell size={17} />
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-orange-500" />
+              </button>
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">
+                IAI
+              </div>
+            </div>
+          </header>
+
+          <div className="space-y-5 p-5 lg:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <h1 className="text-2xl font-black tracking-tight md:text-3xl">Dashboard</h1>
+              <div className="flex flex-wrap gap-3">
+                <button className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700" onClick={() => setModerationNotice({ tone: "info", title: "All-time dashboard", detail: "The current dashboard uses all reports loaded from the admin moderation dataset." })} type="button">
+                  All time
+                </button>
+                <select
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 outline-none"
+                  value={filter}
+                  onChange={(event) => {
+                    const next = event.target.value as "all" | IssueStatus;
+                    setFilter(next);
+                  }}
+                >
+                  <option value="all">All Reports</option>
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>{statusLabel(status)}</option>
+                  ))}
+                </select>
+                <button className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700" onClick={() => setModerationNotice({ tone: "info", title: "Dashboard widgets are active", detail: "The current cards, queue table, activity feed, and status widgets are already wired to live data." })} type="button">
+                  Widgets ready
+                </button>
+                <button className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={visibleIssues.length === 0} onClick={exportVisibleIssues} type="button">
+                  Export
+                </button>
+              </div>
+            </div>
+
+            {moderationNotice ? (
+              <div
+                className={`flex items-start justify-between gap-4 rounded-3xl border p-4 shadow-sm ${
+                  moderationNotice.tone === "success"
+                    ? "border-emerald-100 bg-emerald-50 text-emerald-900"
+                    : moderationNotice.tone === "error"
+                      ? "border-rose-100 bg-rose-50 text-rose-900"
+                      : "border-orange-100 bg-orange-50 text-orange-900"
+                }`}
+                role={moderationNotice.tone === "error" ? "alert" : "status"}
+              >
+                <div className="flex gap-3">
+                  {moderationNotice.tone === "success" ? (
+                    <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} />
+                  ) : (
+                    <AlertCircle className={`mt-0.5 shrink-0 ${moderationNotice.tone === "error" ? "text-rose-600" : "text-orange-600"}`} size={20} />
+                  )}
+                  <div>
+                    <p className="text-sm font-black">{moderationNotice.title}</p>
+                    <p className="mt-1 text-sm font-semibold opacity-80">{moderationNotice.detail}</p>
+                  </div>
+                </div>
+                <button className="rounded-full p-1 opacity-60 transition hover:bg-white/70 hover:opacity-100" onClick={() => setModerationNotice(null)} title="Dismiss message" type="button">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <DashboardMetric icon={<FileText size={18} />} label="Total Reports" value={issues.length} detail={`${activeCount} active`} tone="blue" />
+              <DashboardMetric icon={<Clock3 size={18} />} label="Needs Review" value={submittedCount + reviewCount} detail={`${submittedCount} new submissions`} tone="green" />
+              <DashboardMetric icon={<AlertCircle size={18} />} label="Rejected" value={rejectedCount} detail="closed or duplicate" tone="rose" />
+              <DashboardMetric icon={<CheckCircle2 size={18} />} label="Public Records" value={publicCount} detail={`${publishedCount} published`} tone="green" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
+              <div className="space-y-5">
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-black">Moderation Activity</h2>
+                      <p className="mt-1 text-sm font-semibold text-slate-500">Workflow movement for public accountability records.</p>
+                    </div>
+                    <MoreVertical className="text-slate-400" size={19} />
+                  </div>
+
+                  <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+                    <div className="flex flex-col justify-center">
+                      <p className="text-4xl font-black">{activityCount}</p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">+{publicConversion}%</span>
+                        <span className="text-xs font-semibold text-slate-500">reports and updates tracked</span>
+                      </div>
+                    </div>
+                    <div className="relative h-44 overflow-hidden rounded-2xl bg-gradient-to-b from-white to-blue-50">
+                      <svg className="h-full w-full" viewBox="0 0 600 190" preserveAspectRatio="none" aria-hidden="true">
+                        <path d="M0 140 C70 130 80 160 140 118 C190 82 220 95 260 106 C315 123 350 68 410 92 C470 116 500 46 600 58" fill="none" stroke="#2563eb" strokeWidth="5" />
+                        <path d="M0 140 C70 130 80 160 140 118 C190 82 220 95 260 106 C315 123 350 68 410 92 C470 116 500 46 600 58 L600 190 L0 190 Z" fill="url(#chartFill)" opacity="0.35" />
+                        <defs>
+                          <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                            <stop stopColor="#2563eb" />
+                            <stop offset="1" stopColor="#ffffff" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <div className="absolute left-[58%] top-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-xl">
+                        <p className="font-black">Today</p>
+                        <p className="mt-1 text-blue-700">{publicCount} public records</p>
+                        <p className="text-slate-500">{activeCount} active reports</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 md:grid-cols-3">
+                    <MiniProgress label="Submitted" value={submittedCount} tone="blue" />
+                    <MiniProgress label="In review" value={reviewCount} tone="green" />
+                    <MiniProgress label="Action stage" value={actionCount} tone="orange" />
+                  </div>
+                </section>
+
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="mb-5 flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-black">Moderation Queue</h2>
+                      <p className="mt-1 text-sm font-semibold text-slate-500">{visibleIssues.length} visible of {issues.length} reports</p>
+                    </div>
+                    <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700" onClick={() => void loadAdmin(session)} type="button">
+                      Refresh
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[680px] text-left">
+                      <thead>
+                        <tr className="border-b border-slate-100 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                          <th className="py-3 pr-4">ID</th>
+                          <th className="py-3 pr-4">Issue</th>
+                          <th className="py-3 pr-4">Status</th>
+                          <th className="py-3 pr-4">Location</th>
+                          <th className="py-3 pr-4">Reported</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {visibleIssues.map((issue) => (
+                          <tr
+                            className={`cursor-pointer transition hover:bg-slate-50 ${selected?.id === issue.id ? "bg-blue-50/50" : ""}`}
+                            key={issue.id}
+                            onClick={() => setSelected(issue)}
+                          >
+                            <td className="py-4 pr-4 text-sm font-bold text-slate-500">{issue.publicId}</td>
+                            <td className="max-w-[260px] py-4 pr-4">
+                              <p className="truncate text-sm font-black text-slate-950">{issue.title}</p>
+                              <p className="mt-1 truncate text-xs font-semibold capitalize text-slate-400">{statusLabel(issue.category)}</p>
+                            </td>
+                            <td className="py-4 pr-4">
+                              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black capitalize text-slate-700">{statusLabel(issue.status)}</span>
+                            </td>
+                            <td className="py-4 pr-4 text-sm font-semibold text-slate-600">{issue.townVillage}</td>
+                            <td className="py-4 pr-4 text-sm font-semibold text-slate-500">{formatShortDate(issue.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {visibleIssues.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
+                      <Search className="mx-auto text-slate-300" size={30} />
+                      <p className="mt-3 text-sm font-black text-slate-700">No reports found</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-400">Try changing the workflow filter or search term.</p>
+                    </div>
+                  ) : null}
+                </section>
+              </div>
+
+              <div className="space-y-5">
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="mb-5 flex items-center justify-between">
+                    <h2 className="text-lg font-black">Most Active Stage</h2>
+                    <MoreVertical className="text-slate-400" size={18} />
+                  </div>
+                  <div className="flex h-36 items-end justify-between gap-3">
+                    {statusBars.map((bar) => (
+                      <div className="flex flex-1 flex-col items-center gap-2" key={bar.label}>
+                        <div className="flex h-24 w-full items-end justify-center rounded-2xl bg-slate-100">
+                          <span className={`w-9 rounded-2xl ${bar.color}`} style={{ height: `${Math.max(18, (bar.value / maxStatusValue) * 100)}%` }} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-500">{bar.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-center text-sm font-bold text-slate-500">
+                    {mostActiveStage.label} leads with {mostActiveStage.value} reports.
+                  </p>
+                </section>
+
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+                  <div className="mb-2 flex items-center justify-between text-left">
+                    <h2 className="text-lg font-black">Public Record Rate</h2>
+                    <MoreVertical className="text-slate-400" size={18} />
+                  </div>
+                  <div className="mx-auto mt-4 flex h-40 w-56 items-end justify-center overflow-hidden rounded-t-full border-[18px] border-b-0 border-slate-100">
+                    <div className="mb-[-18px] flex h-32 w-44 items-center justify-center rounded-t-full border-[18px] border-b-0 border-emerald-400">
+                      <span className="mb-3 text-4xl font-black">{publicConversion}%</span>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-slate-500">On track for public transparency goals</p>
+                </section>
+
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="mb-5 flex items-center justify-between">
+                    <h2 className="text-lg font-black">Recent Activity</h2>
+                    <MoreVertical className="text-slate-400" size={18} />
+                  </div>
+                  <div className="space-y-3">
+                    {recentUpdates.length > 0 ? (
+                      recentUpdates.slice(0, 4).map((update) => (
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3" key={update.id}>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-700">{statusLabel(update.updateType)}</span>
+                            <span className="text-[10px] font-bold text-slate-400">{formatShortDate(update.createdAt)}</span>
+                          </div>
+                          <p className="mt-2 line-clamp-2 text-xs font-semibold leading-relaxed text-slate-600">{update.body}</p>
+                          <p className="mt-2 truncate text-[10px] font-black text-slate-400">{update.publicId ?? "Private update"} · {update.issueTitle ?? "Report"}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                        <p className="text-sm font-black text-slate-700">No recent updates</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-400">Public action updates will appear here.</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            {role === "superadmin" ? (
+              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                    <Settings size={20} />
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900">Superadmin Controls</h2>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Authorize community administrators</p>
+                  </div>
+                </div>
+
+                <div className="flex max-w-3xl flex-col gap-4 md:flex-row md:items-end">
+                  <div className="flex w-full flex-1 flex-col gap-1.5">
+                    <label className="text-xs font-extrabold uppercase text-slate-700">Citizen Account Email</label>
+                    <div className="relative flex items-center">
+                      <Mail className="absolute left-4 text-slate-400" size={16} />
+                      <input
+                        className="w-full rounded-2xl border border-slate-200 py-3 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        value={promoteEmail}
+                        onChange={(event) => setPromoteEmail(event.target.value)}
+                        placeholder="name@domain.com"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
+                    type="button"
+                    disabled={promoting}
+                    onClick={promoteToAdmin}
+                  >
+                    <UserCheck size={16} /> {promoting ? "Promoting..." : "Promote to Admin"}
+                  </button>
+                </div>
+
+                {promoteMessage ? (
+                  <div className={`mt-4 max-w-3xl rounded-xl border p-4 text-xs font-extrabold ${
+                    promoteMessage.toLowerCase().includes("successfully")
+                      ? "border-emerald-100 bg-emerald-50 text-emerald-800"
+                      : "border-rose-100 bg-rose-50 text-rose-800"
+                  }`}>
+                    {promoteMessage}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            {selected ? (
+              <ModerationForm issue={selected} busy={busy} onSave={saveModeration} />
+            ) : (
+              <section className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+                <Search className="mb-3 text-slate-300" size={32} />
+                <h2 className="text-lg font-bold text-slate-800">Select a report</h2>
+                <p className="mt-1 max-w-sm text-sm font-semibold text-slate-400">Choose a report from the moderation queue to review private attributes and save decisions.</p>
+              </section>
             )}
           </div>
         </section>
-
-        {/* Selected Issue Moderation Editor Form */}
-        <div className="lg:col-span-2">
-          {selected ? (
-            <ModerationForm issue={selected} busy={busy} onSave={saveModeration} />
-          ) : (
-            <section className="bg-white rounded-3xl border border-slate-100 shadow-xl p-10 text-center flex flex-col items-center justify-center min-h-[300px]">
-              <Search className="text-slate-300 mb-3" size={32} />
-              <h2 className="text-lg font-bold text-slate-800">Select a report</h2>
-              <p className="text-sm font-semibold text-slate-400 mt-1 max-w-sm">
-                Choose an active report from the moderation queue on the left to review its private attributes and save decisions.
-              </p>
-            </section>
-          )}
-        </div>
       </div>
     </main>
+  );
+}
+
+function AdminNavItem({ icon, label, active = false, badge }: { icon: ReactNode; label: string; active?: boolean; badge?: number }) {
+  return (
+    <button
+      className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-black transition ${
+        active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+      }`}
+      type="button"
+    >
+      <span className="flex items-center gap-3">
+        <span className={active ? "text-blue-600" : "text-slate-400"}>{icon}</span>
+        {label}
+      </span>
+      {typeof badge === "number" ? (
+        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-600">{badge}</span>
+      ) : active ? (
+        <span className="h-2 w-2 rounded-full bg-blue-600" />
+      ) : null}
+    </button>
+  );
+}
+
+function DashboardMetric({
+  icon,
+  label,
+  value,
+  detail,
+  tone
+}: {
+  icon: ReactNode;
+  label: string;
+  value: number;
+  detail: string;
+  tone: "slate" | "orange" | "green" | "blue" | "rose";
+}) {
+  const tones = {
+    slate: "bg-slate-100 text-slate-700",
+    orange: "bg-orange-50 text-orange-700",
+    green: "bg-emerald-50 text-emerald-700",
+    blue: "bg-blue-50 text-blue-700",
+    rose: "bg-rose-50 text-rose-700"
+  };
+
+  return (
+    <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/5">
+      <div className="flex items-start justify-between gap-4">
+        <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${tones[tone]}`}>{icon}</span>
+        <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Live</span>
+      </div>
+      <p className="mt-5 text-sm font-bold text-slate-500">{label}</p>
+      <div className="mt-2 flex items-end justify-between gap-4">
+        <strong className="text-4xl font-black tracking-tight text-slate-950">{value}</strong>
+        <span className="text-right text-xs font-extrabold text-slate-400">{detail}</span>
+      </div>
+    </section>
+  );
+}
+
+function MiniProgress({ label, value, tone }: { label: string; value: number; tone: "blue" | "green" | "orange" }) {
+  const tones = {
+    blue: "bg-blue-600",
+    green: "bg-emerald-500",
+    orange: "bg-orange-500"
+  };
+
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4">
+      <p className="text-sm font-black text-slate-950">{value}</p>
+      <p className="mt-1 text-xs font-semibold text-slate-500">{label}</p>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <span className={`block h-full rounded-full ${tones[tone]}`} style={{ width: `${Math.min(100, Math.max(8, value * 18))}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white px-3 py-4">
+      <p className="text-xs font-black uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="mt-2 text-xl font-black text-slate-950">{value}</p>
+    </div>
   );
 }
 
@@ -558,7 +956,7 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
             <div className="bg-rose-50/10 border border-rose-100/50 rounded-2xl p-4 text-xs font-bold text-slate-600 space-y-2">
               <p><span className="text-slate-400">Reporter ID:</span> {issue.reporterId ?? "not available"}</p>
               <p><span className="text-slate-400">Private address:</span> {issue.privateAddress || "not provided"}</p>
-              <p className="text-[10px] text-rose-600 font-extrabold">🔒 Reporter coordinates and phone are hidden in the database view.</p>
+              <p className="text-[10px] font-extrabold text-rose-600">Private reporter coordinates and phone are hidden in the database view.</p>
             </div>
           </div>
         </div>

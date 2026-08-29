@@ -189,6 +189,17 @@ export type AdminIssue = WebsiteIssue & {
   reporterId: string | null;
 };
 
+export type AdminIssueUpdate = {
+  id: string;
+  issueId: string;
+  publicId: string | null;
+  issueTitle: string | null;
+  updateType: string;
+  body: string;
+  isPublic: boolean;
+  createdAt: string;
+};
+
 export async function getAdminIssues(status?: IssueStatus) {
   let query = supabase
     .from("reports")
@@ -204,6 +215,35 @@ export async function getAdminIssues(status?: IssueStatus) {
     ...mapIssue(row),
     reporterId: row.reporter_id ?? null
   })) as AdminIssue[];
+}
+
+export async function getRecentIssueUpdates(limit = 8) {
+  const { data, error } = await supabase
+    .from("issue_updates")
+    .select(`
+      id,
+      issue_id,
+      update_type,
+      body,
+      is_public,
+      created_at,
+      reports(public_id, summary)
+    `)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+
+  return (data ?? []).map((row: Record<string, any>) => ({
+    id: row.id,
+    issueId: row.issue_id,
+    publicId: row.reports?.public_id ?? null,
+    issueTitle: row.reports?.summary ?? null,
+    updateType: row.update_type,
+    body: row.body,
+    isPublic: Boolean(row.is_public),
+    createdAt: row.created_at
+  })) as AdminIssueUpdate[];
 }
 
 export async function getAdminIssue(issueId: string) {

@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-08-29 - Admin Dashboard Backend Wiring
+
+- Wired the redesigned admin dashboard to live report data for KPI cards, sidebar counts, workflow stage bars, public record rate, and most-active-stage summaries.
+- Added client-side admin search across public ID, title, category, status, location, pincode, and report summary.
+- Connected the moderation queue table to the active status filter and search results, with row selection preserved for the moderation editor.
+- Added CSV export for the currently visible admin report queue.
+- Added recent activity loading from `issue_updates`, with a safe empty state if the activity feed is unavailable.
+- Added useful in-page feedback for dashboard utility controls and improved superadmin email validation before promotion.
+- Made the admin dashboard fill the browser viewport edge-to-edge while keeping its internal app layout.
+
+## 2026-08-29 - Separate Admin and Public Layouts
+
+- Removed the public website header and footer from admin routes so the dashboard renders as a standalone admin workspace.
+- Moved public pages into a `(public)` route group with their own layout so public URLs keep the same paths while admin routes stay fully separate.
+- Kept the root app layout minimal to avoid mixing public website chrome with the admin dashboard shell.
+
+## 2026-08-29 - Admin Dashboard Workspace Redesign
+
+- Reworked the admin area into a dashboard-style operations workspace with a left sidebar, top utility bar, metric cards, workflow overview, and queue health panel.
+- Preserved the existing moderation queue, superadmin promotion flow, save confirmation dialog, and success/error feedback behavior.
+- Restyled the moderation queue and selected issue workspace so admins can scan report status, location, public ID, and date more easily.
+
+## 2026-08-29 - PWA Install Support
+
+- Added installable PWA metadata for India Against Injustice with standalone display, app scope, theme color, and home-screen icons.
+- Added generated app icons for Android/Chrome install prompts and Apple touch icons.
+- Added a lightweight production service worker for the main public shell routes.
+- Added a Download App navigation button with install prompt support and browser fallback guidance.
+
 ## 2026-08-29 - Public Form Validation UX
 
 - Added clearer field-level validation to the public report form for title, category, location, pincode, detailed notes, and photo uploads.

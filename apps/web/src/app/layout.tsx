@@ -1,17 +1,33 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { siteConfig } from "@/lib/site";
-import Navigation from "@/components/Navigation";
+import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
   title: {
     default: "India Against Injustice (IAI) | Public Accountability & Civic Records",
     template: "%s | India Against Injustice"
   },
   description:
     "Report civic injustices, monitor public works projects, track politicians and authorities, access government schemes, and drive nation-wide civic action on India's premier public accountability platform.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "IAI"
+  },
+  formatDetection: {
+    telephone: false
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+  },
   openGraph: {
     title: "India Against Injustice (IAI) | Public Accountability",
     description:
@@ -29,40 +45,19 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ff6b00" },
+    { media: "(prefers-color-scheme: dark)", color: "#ff8a00" }
+  ]
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" className="h-full">
       <body className="h-full bg-slate-50 text-slate-900 selection:bg-orange-100 antialiased">
-        <div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,103,31,0.08),rgba(255,255,255,0))] pb-20 md:pb-0">
-          
-          {/* Header */}
-          <header className="sticky top-0 z-40 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
-            <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-              <Link className="group flex shrink-0 flex-col" href="/">
-                <strong className="text-lg font-black tracking-tight text-slate-900 group-hover:text-orange-600 transition-colors">
-                  {siteConfig.name}
-                </strong>
-                <span className="max-w-[240px] text-xs font-medium uppercase tracking-wide text-slate-500 sm:max-w-none">
-                  {siteConfig.tagline}
-                </span>
-              </Link>
-              
-              <Navigation />
-            </div>
-          </header>
-          
-          {/* Main Content */}
-          <main className="flex-1 w-full">
-            {children}
-          </main>
-
-          {/* Footer (Desktop only) */}
-          <footer className="hidden md:block py-8 border-t border-slate-100 bg-slate-50/50">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-xs font-semibold text-slate-400">
-              © {new Date().getFullYear()} India Against Injustice (IAI). Citizen reports are public-interest submissions. Private citizen data is strictly confidential.
-            </div>
-          </footer>
-        </div>
+        <ServiceWorkerRegistration />
+        {children}
       </body>
     </html>
   );

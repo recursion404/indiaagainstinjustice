@@ -5,6 +5,7 @@ import { LogIn, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { DownloadAppButton } from "@/components/pwa/DownloadAppButton";
 
 const links = [
   { href: "/issues", label: "Issues" },
@@ -93,7 +94,7 @@ export default function Navigation() {
         ))}
       </div>
 
-      <div className="grid max-w-sm flex-1 grid-cols-3 gap-1 xl:hidden">
+      <div className="grid max-w-md flex-1 grid-cols-4 gap-1 xl:hidden">
         {[links[0], links[1], session ? { href: "/admin" as const, label: "Account" } : { href: "/login" as const, label: "Sign in" }].map((link) => (
           <Link
             className="rounded-2xl px-2 py-2 text-center text-[10px] font-black uppercase tracking-[0.08em] text-slate-600 hover:bg-orange-100 hover:text-orange-800 sm:text-xs"
@@ -103,7 +104,10 @@ export default function Navigation() {
             {link.label}
           </Link>
         ))}
+        <DownloadAppButton compact />
       </div>
+
+      <DownloadAppButton className="hidden md:block" />
 
       {isAdmin ? (
         <Link
