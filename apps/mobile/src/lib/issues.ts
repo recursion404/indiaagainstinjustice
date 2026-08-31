@@ -12,7 +12,10 @@ export type IssuePhotoDraft = {
   uri: string;
   fileName?: string | null;
   mimeType?: string | null;
+  fileSize?: number | null;
 };
+
+const ISSUE_PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 
 export type IssueDraft = {
   title: string;
@@ -274,6 +277,9 @@ type UploadIssuePhotoInput = {
 async function uploadIssuePhoto({ issueId, publicId, photo, userId }: UploadIssuePhotoInput) {
   const response = await fetch(photo.uri);
   const file = await response.arrayBuffer();
+  if (file.byteLength > ISSUE_PHOTO_MAX_BYTES) {
+    throw new Error("Each image must be 10 MB or smaller.");
+  }
   const contentType = photo.mimeType ?? "image/jpeg";
   const extension = contentType.split("/")[1] ?? "jpg";
   const safeName = photo.fileName?.replace(/[^a-zA-Z0-9._-]/g, "-") ?? `${publicId}.${extension}`;

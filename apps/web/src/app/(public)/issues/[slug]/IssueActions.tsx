@@ -31,7 +31,7 @@ export default function IssueActions({ issueTitle, issueUrl }: IssueActionsProps
   }
 
   return (
-    <div className="space-y-3 rounded-3xl border border-orange-100 bg-orange-50/70 p-5">
+    <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/10 p-5">
       <div className="flex flex-wrap gap-3">
         <Button type="button" onClick={shareIssue}>
           Share issue
@@ -40,7 +40,7 @@ export default function IssueActions({ issueTitle, issueUrl }: IssueActionsProps
           Support
         </Button>
       </div>
-      {message ? <p className="text-sm font-semibold text-slate-600">{message}</p> : null}
+      {message ? <p className="text-sm font-semibold text-muted-foreground">{message}</p> : null}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Users2, Mail, Award, CheckCircle2 } from "lucide-react";
+import { Badge, Button, Card, Field, PageShell, SectionHeader, cn, inputClassName } from "@/components/ui";
 
 const VOLUNTEER_LIMITS = {
   nameMin: 2,
@@ -81,83 +82,70 @@ export default function VolunteerPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center max-w-2xl mx-auto mb-12">
-        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-orange-50 text-orange-700 border border-orange-100 uppercase tracking-widest mb-4">
-          <Users2 size={12} className="text-orange-600" /> Join Forces
-        </span>
-        <h1 className="text-4xl font-black text-slate-950 tracking-tight mb-3">
-          Volunteer for Pune Against Injustice
-        </h1>
-        <p className="text-slate-500 font-semibold leading-relaxed">
-          Help review citizen reports, verify real-world outcomes, document chronic bottleneck locations, and turn local observations into accountable public actions.
-        </p>
-      </div>
+    <PageShell className="max-w-4xl">
+      <SectionHeader
+        eyebrow={<Badge><Users2 size={12} /> Join forces</Badge>}
+        title="Volunteer for India Against Injustice"
+        description="Help review citizen reports, verify real-world outcomes, document civic issues, and turn local observations into accountable public action."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-8 items-start">
-        {/* Volunteer info */}
-        <section className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-900/5 p-8 md:col-span-2 space-y-6">
-          <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-1.5">
-            <Award size={16} className="text-orange-600" /> Why Volunteer?
+        <Card className="md:col-span-2 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground border-b border-border pb-3 flex items-center gap-1.5">
+            <Award size={16} className="text-primary" /> Why Volunteer?
           </h2>
-          
+
           <ul className="space-y-4">
-            <li className="flex gap-3 text-slate-600 text-sm font-semibold leading-relaxed">
-              <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+            <li className="flex gap-3 text-muted-foreground text-sm font-semibold leading-relaxed">
+              <CheckCircle2 size={18} className="text-secondary shrink-0 mt-0.5" />
               <span>Verify crowd-sourced reports to maintain a highly credible public registry.</span>
             </li>
-            <li className="flex gap-3 text-slate-600 text-sm font-semibold leading-relaxed">
-              <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+            <li className="flex gap-3 text-muted-foreground text-sm font-semibold leading-relaxed">
+              <CheckCircle2 size={18} className="text-secondary shrink-0 mt-0.5" />
               <span>Provide photographic evidence of infrastructure progress and street safety issues.</span>
             </li>
-            <li className="flex gap-3 text-slate-600 text-sm font-semibold leading-relaxed">
-              <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+            <li className="flex gap-3 text-muted-foreground text-sm font-semibold leading-relaxed">
+              <CheckCircle2 size={18} className="text-secondary shrink-0 mt-0.5" />
               <span>Lead community outreach drives to onboard residential welfare groups.</span>
             </li>
           </ul>
-        </section>
+        </Card>
 
-        {/* Volunteer Application Form */}
-        <section className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-900/5 p-8 md:col-span-3 space-y-6">
-          <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-1.5">
-            <Mail size={16} className="text-orange-600" /> Apply Today
+        <Card className="md:col-span-3 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground border-b border-border pb-3 flex items-center gap-1.5">
+            <Mail size={16} className="text-primary" /> Apply Today
           </h2>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Full Name *</label>
+              <Field label="Full Name *" error={errors.name}>
                 <input
                   aria-invalid={Boolean(errors.name)}
-                  className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all focus:ring-2 ${errors.name ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
+                  className={cn(inputClassName, errors.name && "border-destructive focus-visible:ring-destructive/20")}
                   maxLength={VOLUNTEER_LIMITS.nameMax}
                   value={values.name}
                   onChange={(event) => update("name", event.target.value)}
                   placeholder="Rahul Patil"
                 />
-                {errors.name ? <span className="text-xs font-bold text-rose-600">{errors.name}</span> : null}
-              </div>
+              </Field>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Email Address *</label>
+              <Field label="Email Address *" error={errors.email}>
                 <input
                   aria-invalid={Boolean(errors.email)}
-                  className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all focus:ring-2 ${errors.email ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
+                  className={cn(inputClassName, errors.email && "border-destructive focus-visible:ring-destructive/20")}
                   maxLength={VOLUNTEER_LIMITS.emailMax}
                   type="email"
                   value={values.email}
                   onChange={(event) => update("email", event.target.value)}
                   placeholder="rahul@domain.com"
                 />
-                {errors.email ? <span className="text-xs font-bold text-rose-600">{errors.email}</span> : null}
-              </div>
+              </Field>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">I can help with</label>
+            <Field label="I can help with" error={errors.interest}>
               <select
                 aria-invalid={Boolean(errors.interest)}
-                className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 font-semibold text-sm transition-all bg-white focus:ring-2 ${errors.interest ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
+                className={cn(inputClassName, errors.interest && "border-destructive focus-visible:ring-destructive/20")}
                 value={values.interest}
                 onChange={(event) => update("interest", event.target.value)}
               >
@@ -167,47 +155,39 @@ export default function VolunteerPage() {
                 <option>Content and research</option>
                 <option>Community outreach</option>
               </select>
-              {errors.interest ? <span className="text-xs font-bold text-rose-600">{errors.interest}</span> : null}
-            </div>
+            </Field>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Introduce Yourself</label>
+            <Field label="Introduce Yourself" error={errors.message}>
               <textarea
                 aria-invalid={Boolean(errors.message)}
-                className={`w-full px-4 py-3 rounded-xl border outline-none text-slate-800 placeholder-slate-400 font-semibold text-sm transition-all focus:ring-2 ${errors.message ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20" : "border-slate-200 focus:border-orange-500 focus:ring-orange-500/20"}`}
+                className={cn(inputClassName, "min-h-28 resize-y", errors.message && "border-destructive focus-visible:ring-destructive/20")}
                 maxLength={VOLUNTEER_LIMITS.messageMax}
-                rows={4}
                 value={values.message}
                 onChange={(event) => update("message", event.target.value)}
                 placeholder="Tell us a little bit about your interest, background, or neighborhood..."
               />
               <div className="flex justify-between gap-3 text-xs font-bold">
-                {errors.message ? <span className="text-rose-600">{errors.message}</span> : <span />}
-                <span className="ml-auto text-slate-400">{values.message.trim().length}/{VOLUNTEER_LIMITS.messageMax}</span>
+                {errors.message ? <span className="text-destructive">{errors.message}</span> : <span />}
+                <span className="ml-auto text-muted-foreground">{values.message.trim().length}/{VOLUNTEER_LIMITS.messageMax}</span>
               </div>
-            </div>
+            </Field>
 
-            <button
-              className="w-full px-6 py-3.5 text-sm font-black text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 rounded-xl shadow-lg shadow-orange-100 disabled:opacity-50 transition-all cursor-pointer"
-              type="button"
-              disabled={busy}
-              onClick={submit}
-            >
+            <Button className="w-full" disabled={busy} onClick={submit}>
               {busy ? "Submitting Application..." : "Submit Application"}
-            </button>
+            </Button>
           </div>
 
           {message && (
-            <div className={`p-4 rounded-xl border text-xs font-extrabold ${
+            <div className={`p-4 rounded-md border text-xs font-extrabold ${
               message.toLowerCase().includes("please") || message.toLowerCase().includes("not") || message.toLowerCase().includes("error")
-                ? "bg-rose-50 border-rose-100 text-rose-800" 
-                : "bg-orange-50 border-orange-100 text-orange-800"
+                ? "bg-destructive/10 border-destructive/20 text-destructive"
+                : "bg-primary/10 border-primary/20 text-primary"
             }`}>
               {message}
             </div>
           )}
-        </section>
+        </Card>
       </div>
-    </main>
+    </PageShell>
   );
 }

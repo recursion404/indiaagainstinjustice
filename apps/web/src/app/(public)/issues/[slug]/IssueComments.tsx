@@ -138,55 +138,55 @@ export function IssueComments({ issueId }: { issueId: string }) {
   }
 
   return (
-    <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-900/5">
-      <div className="mb-6 flex flex-col justify-between gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-center">
+    <section className="rounded-lg border border-border bg-card p-6 ">
+      <div className="mb-6 flex flex-col justify-between gap-3 border-b border-border pb-5 sm:flex-row sm:items-center">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-orange-700">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-primary">
             <MessageCircle size={14} />
             Public discussion
           </div>
-          <h2 className="text-2xl font-black tracking-tight text-slate-950">Community comments</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Community comments</h2>
+          <p className="mt-1 text-sm font-semibold text-muted-foreground">
             Everyone can read the discussion. Sign in to add your view.
           </p>
         </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black uppercase tracking-widest text-slate-500">
+        <span className="rounded-md bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           {comments.length} {comments.length === 1 ? "comment" : "comments"}
         </span>
       </div>
 
       {loading ? (
-        <p className="rounded-2xl bg-slate-50 p-5 text-sm font-bold text-slate-500">Loading comments...</p>
+        <p className="rounded-md bg-muted p-5 text-sm font-bold text-muted-foreground">Loading comments...</p>
       ) : comments.length ? (
         <div className="space-y-4">
           {comments.map((comment) => (
-            <article className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4" key={comment.id}>
+            <article className="rounded-md border border-border bg-muted/70 p-4" key={comment.id}>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  <UserCircle className="shrink-0 text-orange-600" size={18} />
-                  <strong className="truncate text-sm font-black text-slate-900">{comment.authorName}</strong>
+                  <UserCircle className="shrink-0 text-primary" size={18} />
+                  <strong className="truncate text-sm font-semibold text-foreground">{comment.authorName}</strong>
                 </div>
-                <time className="shrink-0 text-xs font-bold text-slate-400">
+                <time className="shrink-0 text-xs font-bold text-muted-foreground">
                   {new Date(comment.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                 </time>
               </div>
-              <p className="whitespace-pre-line text-sm font-medium leading-6 text-slate-700">{comment.body}</p>
+              <p className="whitespace-pre-line text-sm font-medium leading-6 text-foreground">{comment.body}</p>
             </article>
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-          <p className="text-sm font-black text-slate-900">No comments yet</p>
-          <p className="mt-1 text-sm font-semibold text-slate-500">Start the public discussion after signing in.</p>
+        <div className="rounded-md border border-dashed border-border bg-muted p-6 text-center">
+          <p className="text-sm font-semibold text-foreground">No comments yet</p>
+          <p className="mt-1 text-sm font-semibold text-muted-foreground">Start the public discussion after signing in.</p>
         </div>
       )}
 
-      <div className="mt-6 border-t border-slate-100 pt-6">
+      <div className="mt-6 border-t border-border pt-6">
         {session ? (
           <div className="space-y-3">
             <textarea
               aria-invalid={Boolean(commentError)}
-              className={cn(inputClassName, "min-h-32 resize-y", commentError && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+              className={cn(inputClassName, "min-h-32 resize-y", commentError && "border-destructive focus-visible:ring-destructive/20")}
               maxLength={COMMENT_LIMITS.max}
               onChange={(event) => {
                 setCommentText(event.target.value);
@@ -197,8 +197,8 @@ export function IssueComments({ issueId }: { issueId: string }) {
             />
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex flex-col gap-1">
-                {commentError ? <span className="text-xs font-bold text-rose-600">{commentError}</span> : null}
-                <span className="text-xs font-bold text-slate-400">{commentText.trim().length}/{COMMENT_LIMITS.max} characters</span>
+                {commentError ? <span className="text-xs font-bold text-destructive">{commentError}</span> : null}
+                <span className="text-xs font-bold text-muted-foreground">{commentText.trim().length}/{COMMENT_LIMITS.max} characters</span>
               </div>
               <Button disabled={posting} onClick={postComment}>
                 <Send size={16} />
@@ -209,7 +209,7 @@ export function IssueComments({ issueId }: { issueId: string }) {
         ) : (
           <Notice tone="muted" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>Sign in to comment on this issue. You can still browse the public record without an account.</span>
-            <Link className="inline-flex justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-black text-white transition hover:bg-orange-700" href="/login">
+            <Link className="inline-flex justify-center rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90" href="/login">
               Sign in
             </Link>
           </Notice>
@@ -218,10 +218,10 @@ export function IssueComments({ issueId }: { issueId: string }) {
         {message ? (
           <p
             className={cn(
-              "mt-3 rounded-xl border px-4 py-3 text-sm font-extrabold",
-              message.tone === "success" && "border-emerald-100 bg-emerald-50 text-emerald-800",
-              message.tone === "error" && "border-rose-100 bg-rose-50 text-rose-800",
-              message.tone === "info" && "border-orange-100 bg-orange-50 text-orange-800"
+              "mt-3 rounded-md border px-4 py-3 text-sm font-extrabold",
+              message.tone === "success" && "border-secondary/20 bg-secondary/10 text-secondary",
+              message.tone === "error" && "border-destructive/20 bg-destructive/10 text-destructive",
+              message.tone === "info" && "border-primary/20 bg-primary/10 text-primary"
             )}
           >
             {message.text}

@@ -14,6 +14,8 @@ type ReportScreenProps = {
   session: Session | null;
 };
 
+const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+
 export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
   const [title, setTitle] = useState("");
   const [state, setState] = useState("");
@@ -35,6 +37,23 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
     session ? "Fill in the fields to submit a civic report." : "You are submitting anonymously. Sign in from Profile to track your reports."
   );
   const [statusKind, setStatusKind] = useState<"info" | "success" | "error">("info");
+
+  function setSelectedPhoto(asset: ImagePicker.ImagePickerAsset) {
+    if (asset.fileSize && asset.fileSize > PHOTO_MAX_BYTES) {
+      const message = "Each image must be 10 MB or smaller.";
+      setStatusKind("error");
+      setStatusMessage(message);
+      Alert.alert("Image too large", message);
+      return;
+    }
+
+    setPhoto({
+      uri: asset.uri,
+      fileName: asset.fileName,
+      mimeType: asset.mimeType,
+      fileSize: asset.fileSize
+    });
+  }
 
   useEffect(() => {
     async function loadCategories() {
@@ -75,12 +94,7 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
     });
 
     if (!result.canceled) {
-      const asset = result.assets[0];
-      setPhoto({
-        uri: asset.uri,
-        fileName: asset.fileName,
-        mimeType: asset.mimeType
-      });
+      setSelectedPhoto(result.assets[0]);
     }
   }
 
@@ -99,12 +113,7 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
     });
 
     if (!result.canceled) {
-      const asset = result.assets[0];
-      setPhoto({
-        uri: asset.uri,
-        fileName: asset.fileName,
-        mimeType: asset.mimeType
-      });
+      setSelectedPhoto(result.assets[0]);
     }
   }
 
@@ -304,6 +313,7 @@ export function ReportScreen({ onOpenProfile, session }: ReportScreenProps) {
           </TouchableOpacity>
         </View>
 
+        <Text style={styles.helperText}>Photo evidence must be 10 MB or smaller. Mobile currently supports one image per report.</Text>
         {photo ? <Image source={{ uri: photo.uri }} style={styles.preview} /> : null}
 
         <TouchableOpacity
@@ -460,6 +470,12 @@ const styles = StyleSheet.create({
     color: "#0B1F4B",
     fontWeight: "700",
     fontSize: 13
+  },
+  helperText: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 18
   },
   preview: {
     aspectRatio: 16 / 10,

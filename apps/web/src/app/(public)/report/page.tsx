@@ -29,7 +29,8 @@ const REPORT_LIMITS = {
   townVillageMax: 80,
   locationNameMax: 120,
   summaryMax: 1200,
-  photoMaxBytes: 5 * 1024 * 1024
+  photoMaxBytes: 10 * 1024 * 1024,
+  photoMaxCount: 2
 };
 
 const allowedPhotoTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -47,7 +48,7 @@ export default function ReportPage() {
   const [townVillage, setTownVillage] = useState("");
   const [summary, setSummary] = useState("");
   const [pincode, setPincode] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -65,6 +66,22 @@ export default function ReportPage() {
   function setFieldValue(field: string, valueSetter: (value: string) => void, value: string) {
     valueSetter(value);
     clearError(field);
+  }
+
+  function getPhotoValidationError(nextPhotos: File[]) {
+    if (nextPhotos.length > REPORT_LIMITS.photoMaxCount) {
+      return `Attach no more than ${REPORT_LIMITS.photoMaxCount} images.`;
+    }
+
+    if (nextPhotos.some((item) => !allowedPhotoTypes.includes(item.type))) {
+      return "Upload only JPG, PNG, or WebP images.";
+    }
+
+    if (nextPhotos.some((item) => item.size > REPORT_LIMITS.photoMaxBytes)) {
+      return "Each image must be 10 MB or smaller.";
+    }
+
+    return "";
   }
 
   useEffect(() => {
@@ -129,10 +146,8 @@ export default function ReportPage() {
 
     if (trimmedLocationName.length > REPORT_LIMITS.locationNameMax) newErrors.locationName = `Landmark must be ${REPORT_LIMITS.locationNameMax} characters or fewer.`;
     if (trimmedSummary.length > REPORT_LIMITS.summaryMax) newErrors.summary = `Description must be ${REPORT_LIMITS.summaryMax} characters or fewer.`;
-    if (photo) {
-      if (!allowedPhotoTypes.includes(photo.type)) newErrors.photo = "Upload a JPG, PNG, or WebP image.";
-      else if (photo.size > REPORT_LIMITS.photoMaxBytes) newErrors.photo = "Photo must be 5 MB or smaller.";
-    }
+    const photoError = getPhotoValidationError(photos);
+    if (photoError) newErrors.photo = photoError;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -165,13 +180,15 @@ export default function ReportPage() {
       const reportUUID = reportId as string;
       const publicId = `IAI-${reportUUID.substring(0, 8)}`;
 
-      if (photo) {
+      if (photos.length > 0) {
         const storageBucket = session?.user.id ?? "anonymous";
-        const storagePath = `${storageBucket}/${reportUUID}/${Date.now()}-${photo.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`;
-        const upload = await supabase.storage.from("issue-photos").upload(storagePath, photo, { contentType: photo.type || "image/jpeg" });
-        if (upload.error) throw upload.error;
-        const photoInsert = await supabase.from("issue_photos").insert({ issue_id: reportUUID, storage_path: storagePath, alt_text: `Evidence photo for ${publicId}`, is_public: false });
-        if (photoInsert.error) throw photoInsert.error;
+        for (const [index, photo] of photos.entries()) {
+          const storagePath = `${storageBucket}/${reportUUID}/${Date.now()}-${index}-${photo.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`;
+          const upload = await supabase.storage.from("issue-photos").upload(storagePath, photo, { contentType: photo.type || "image/jpeg" });
+          if (upload.error) throw upload.error;
+          const photoInsert = await supabase.from("issue_photos").insert({ issue_id: reportUUID, storage_path: storagePath, alt_text: `Evidence photo ${index + 1} for ${publicId}`, is_public: false });
+          if (photoInsert.error) throw photoInsert.error;
+        }
       }
 
       const successMessage = `Report ${publicId} submitted for review. It is private until an admin verifies it.`;
@@ -181,7 +198,7 @@ export default function ReportPage() {
       setDistrict("Pune");
       setTownVillage("");
       setSummary("");
-      setPhoto(null);
+      setPhotos([]);
       setCoordinates(null);
       setLocationName("");
       setPincode("");
@@ -206,24 +223,24 @@ export default function ReportPage() {
       <Card className="space-y-8 p-8 sm:p-10">
         {session ? <Notice tone="muted">Signed in as {session.user.email}</Notice> : null}
 
-        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-1">
+        <div className="grid grid-cols-2 gap-2 rounded-md bg-muted p-1">
           <Button variant={mode === "simple" ? "primary" : "ghost"} onClick={() => setMode("simple")} className="shadow-none">Simple report</Button>
           <Button variant={mode === "detailed" ? "primary" : "ghost"} onClick={() => setMode("detailed")} className="shadow-none">Detailed report</Button>
         </div>
 
         <div className="space-y-6">
-          <h2 className="border-b border-slate-100 pb-3 text-lg font-black text-slate-900">1. Issue information</h2>
+          <h2 className="border-b border-border pb-3 text-lg font-semibold text-foreground">1. Issue information</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Field label="Issue Title / Summary *" error={errors.title} className="md:col-span-2">
               <input
                 aria-invalid={Boolean(errors.title)}
-                className={cn(inputClassName, errors.title && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                className={cn(inputClassName, errors.title && "border-destructive focus-visible:ring-destructive/20")}
                 maxLength={REPORT_LIMITS.titleMax}
                 value={title}
                 onChange={(event) => setFieldValue("title", setTitle, event.target.value)}
                 placeholder="e.g. Unfinished road bridge causing safety risk"
               />
-              <span className="text-xs font-bold text-slate-400">{title.trim().length}/{REPORT_LIMITS.titleMax} characters</span>
+              <span className="text-xs font-bold text-muted-foreground">{title.trim().length}/{REPORT_LIMITS.titleMax} characters</span>
             </Field>
 
             <Field label="Category / Topic *">
@@ -242,7 +259,7 @@ export default function ReportPage() {
               <Field label="Describe category *" error={errors.customCategory}>
                 <input
                   aria-invalid={Boolean(errors.customCategory)}
-                  className={cn(inputClassName, errors.customCategory && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                  className={cn(inputClassName, errors.customCategory && "border-destructive focus-visible:ring-destructive/20")}
                   maxLength={REPORT_LIMITS.customCategoryMax}
                   value={customCategory}
                   onChange={(event) => setFieldValue("customCategory", setCustomCategory, event.target.value)}
@@ -254,7 +271,7 @@ export default function ReportPage() {
         </div>
 
         <div className="space-y-6">
-          <h2 className="border-b border-slate-100 pb-3 text-lg font-black text-slate-900">2. Location details</h2>
+          <h2 className="border-b border-border pb-3 text-lg font-semibold text-foreground">2. Location details</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Field label="State *" error={errors.state}>
               <select className={inputClassName} value={state} onChange={(event) => {
@@ -275,7 +292,7 @@ export default function ReportPage() {
             <Field label="Town / Village / Ward *" error={errors.townVillage}>
               <input
                 aria-invalid={Boolean(errors.townVillage)}
-                className={cn(inputClassName, errors.townVillage && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                className={cn(inputClassName, errors.townVillage && "border-destructive focus-visible:ring-destructive/20")}
                 maxLength={REPORT_LIMITS.townVillageMax}
                 value={townVillage}
                 onChange={(event) => setFieldValue("townVillage", setTownVillage, event.target.value)}
@@ -286,7 +303,7 @@ export default function ReportPage() {
             <Field label="Pincode *" error={errors.pincode}>
               <input
                 aria-invalid={Boolean(errors.pincode)}
-                className={cn(inputClassName, errors.pincode && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                className={cn(inputClassName, errors.pincode && "border-destructive focus-visible:ring-destructive/20")}
                 inputMode="numeric"
                 maxLength={6}
                 value={pincode}
@@ -299,7 +316,7 @@ export default function ReportPage() {
               <Field label="Specific landmark / road" error={errors.locationName} className="md:col-span-2">
                 <input
                   aria-invalid={Boolean(errors.locationName)}
-                  className={cn(inputClassName, errors.locationName && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                  className={cn(inputClassName, errors.locationName && "border-destructive focus-visible:ring-destructive/20")}
                   maxLength={REPORT_LIMITS.locationNameMax}
                   value={locationName}
                   onChange={(event) => setFieldValue("locationName", setLocationName, event.target.value)}
@@ -311,42 +328,58 @@ export default function ReportPage() {
         </div>
 
         <div className="space-y-6">
-          <h2 className="border-b border-slate-100 pb-3 text-lg font-black text-slate-900">3. Evidence and context</h2>
+          <h2 className="border-b border-border pb-3 text-lg font-semibold text-foreground">3. Evidence and context</h2>
           <div className="grid grid-cols-1 gap-6">
             {mode === "detailed" ? (
               <Field label="Detailed description / notes" error={errors.summary}>
                 <textarea
                   aria-invalid={Boolean(errors.summary)}
                   rows={5}
-                  className={cn(inputClassName, "resize-none", errors.summary && "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20")}
+                  className={cn(inputClassName, "resize-none", errors.summary && "border-destructive focus-visible:ring-destructive/20")}
                   maxLength={REPORT_LIMITS.summaryMax}
                   value={summary}
                   onChange={(event) => setFieldValue("summary", setSummary, event.target.value)}
                   placeholder="Provide any additional details, repeated history, or evidence notes."
                 />
-                <span className="text-xs font-bold text-slate-400">{summary.trim().length}/{REPORT_LIMITS.summaryMax} characters</span>
+                <span className="text-xs font-bold text-muted-foreground">{summary.trim().length}/{REPORT_LIMITS.summaryMax} characters</span>
               </Field>
             ) : null}
 
             <Field label="Photo evidence" error={errors.photo}>
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4">
-                <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400"><Camera size={14} /> Stored privately before review</div>
+              <div className="rounded-md border border-dashed border-border bg-muted/60 p-4">
+                <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground"><Camera size={14} /> Stored privately before review</div>
                 <input
                   type="file"
+                  multiple
                   accept="image/jpeg,image/png,image/webp"
-                  className="w-full text-sm font-semibold text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2.5 file:text-xs file:font-black file:text-slate-700 hover:file:bg-slate-100"
+                  className="w-full text-sm font-semibold text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-card file:px-4 file:py-2.5 file:text-xs file:font-semibold file:text-foreground hover:file:bg-muted"
                   onChange={(event) => {
-                    setPhoto(event.target.files?.[0] ?? null);
-                    clearError("photo");
+                    const selected = Array.from(event.target.files ?? []);
+                    setPhotos(selected);
+                    const photoError = getPhotoValidationError(selected);
+                    if (photoError) {
+                      setErrors((current) => ({ ...current, photo: photoError }));
+                    } else {
+                      clearError("photo");
+                    }
                   }}
                 />
-                <p className="mt-3 text-xs font-bold text-slate-400">JPG, PNG, or WebP. Maximum 5 MB.</p>
+                <p className="mt-3 text-xs font-bold text-muted-foreground">JPG, PNG, or WebP. Maximum {REPORT_LIMITS.photoMaxCount} images, 10 MB each.</p>
+                {photos.length > 0 ? (
+                  <ul className="mt-3 space-y-1 text-xs font-medium text-muted-foreground">
+                    {photos.map((item) => (
+                      <li key={`${item.name}-${item.size}`}>
+                        {item.name} · {(item.size / 1024 / 1024).toFixed(1)} MB
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
             </Field>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
           <Button variant="ghost" onClick={useLocation}><MapPin size={16} /> Use my location</Button>
           <Button disabled={busy} onClick={submitReport} className="px-8"><Send size={16} /> {busy ? "Submitting..." : "Submit report"}</Button>
         </div>

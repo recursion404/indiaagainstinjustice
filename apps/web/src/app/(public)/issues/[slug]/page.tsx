@@ -92,15 +92,15 @@ export default async function IssuePage({ params }: IssuePageProps) {
               <StatCard label="Public shares" value={issue.shareCount ?? 0} />
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">
+            <div className="rounded-lg border border-border bg-muted p-5">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Location
               </h2>
-              <p className="mt-3 text-lg font-bold text-slate-900">
+              <p className="mt-3 text-lg font-bold text-foreground">
               {locationParts.length > 0 ? locationParts.join(", ") : "India"}
               </p>
               {issue.pincode ? (
-                <p className="mt-1 text-sm font-semibold text-slate-500">
+                <p className="mt-1 text-sm font-semibold text-muted-foreground">
                   Pincode: {issue.pincode}
                 </p>
               ) : null}
@@ -108,10 +108,10 @@ export default async function IssuePage({ params }: IssuePageProps) {
           </Card>
 
           <Card className="space-y-4">
-            <h2 className="text-2xl font-black tracking-tight text-slate-950">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
               Public summary
             </h2>
-            <p className="text-lg leading-8 text-slate-700">{issue.summary}</p>
+            <p className="text-lg leading-8 text-foreground">{issue.summary}</p>
           </Card>
 
           <IssueComments issueId={issue.id} />
@@ -119,11 +119,11 @@ export default async function IssuePage({ params }: IssuePageProps) {
 
         <aside className="space-y-6">
           <Card className="space-y-4">
-            <h2 className="text-xl font-black text-slate-950">Public ID</h2>
-            <p className="rounded-2xl bg-slate-950 px-4 py-3 font-mono text-sm font-bold text-white">
+            <h2 className="text-xl font-semibold text-foreground">Public ID</h2>
+            <p className="rounded-md bg-foreground px-4 py-3 font-mono text-sm font-bold text-primary-foreground">
               {issue.publicId}
             </p>
-            <p className="text-sm leading-6 text-slate-600">
+            <p className="text-sm leading-6 text-muted-foreground">
               This is the public-safe record created after review. Private citizen contact
               details are not shown here.
             </p>

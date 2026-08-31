@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-31 - Shadcn-Style UI System Rewrite
+
+- Reworked the website UI around shadcn-style design primitives and CSS variable tokens instead of one-off glossy Tailwind styling.
+- Added shadcn-compatible theme tokens for background, foreground, card, popover, primary, secondary, accent, destructive, muted, border, input, ring, and radius.
+- Restored the missing homepage primary CTA beside `See public issues` by routing the hero actions through the shared `ButtonLink` primitive.
+- Updated shared UI primitives for page shells, section headers, cards, badges, buttons, fields, notices, inputs, empty states, and stat cards.
+- Flattened the public header, homepage, login, report, volunteer, polls, records, issue listings, admin dashboard, PWA install button, and SEO content desk toward restrained civic-product UI.
+- Removed the old custom `saffron`, `navy`, and `green` Tailwind palette utilities in favor of shadcn-style semantic tokens while keeping the Republic of India tricolor as the brand basis.
+- Cleaned up invisible/bad color pairings and old glossy markers such as oversized radii, heavy shadows, page-local gradients, and legacy palette classes.
+- Added migration `20260831000100_0014_create_issue_photo_storage.sql` establishing reproducible `issue-photos` storage bucket policies, `public.issue_photos` metadata table, and RLS rules for anonymous/authenticated evidence uploads and admin management.
+
 ## 2026-08-29 - Admin Dashboard Backend Wiring
 
 - Wired the redesigned admin dashboard to live report data for KPI cards, sidebar counts, workflow stage bars, public record rate, and most-active-stage summaries.

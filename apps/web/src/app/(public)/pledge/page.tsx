@@ -23,25 +23,25 @@ export default function PledgePage() {
           <div className="space-y-4">
             {pledgePoints.map((point, index) => (
               <div
-                className="flex gap-4 rounded-3xl border border-slate-200 bg-white p-4"
+                className="flex gap-4 rounded-lg border border-border bg-card p-4"
                 key={point}
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-black text-orange-700">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">
                   {index + 1}
                 </span>
-                <p className="text-base font-semibold leading-7 text-slate-700">{point}</p>
+                <p className="text-base font-semibold leading-7 text-foreground">{point}</p>
               </div>
             ))}
           </div>
         </Card>
 
-        <Card className="flex flex-col justify-between gap-8 bg-slate-950 text-white">
+        <Card className="flex flex-col justify-between gap-8 bg-foreground text-background">
           <div className="space-y-4">
             <Badge tone="green">Movement</Badge>
-            <h2 className="text-4xl font-black tracking-tight">
+            <h2 className="text-4xl font-semibold tracking-tight">
               Public records need public discipline.
             </h2>
-            <p className="text-lg leading-8 text-slate-300">
+            <p className="text-lg leading-8 text-background/70">
               Every issue, comment, vote and support action should help people understand what
               happened, what is pending and who can act next.
             </p>

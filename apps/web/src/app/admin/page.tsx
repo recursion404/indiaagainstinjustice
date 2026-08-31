@@ -248,23 +248,23 @@ export default function AdminPage() {
     return (
       <main className="container band max-w-xl mx-auto py-20 px-4">
         <div className="text-center mb-8">
-          <ShieldAlert className="mx-auto text-orange-600 mb-3" size={40} />
-          <h1 className="text-3xl font-black text-slate-950">Admin Workspace</h1>
-          <p className="text-slate-500 font-semibold mt-1">
+          <ShieldAlert className="mx-auto text-primary mb-3" size={40} />
+          <h1 className="text-3xl font-semibold text-foreground">Admin Workspace</h1>
+          <p className="text-muted-foreground font-semibold mt-1">
             Review citizen reports, publish safe public pages, and manage local priority actions.
           </p>
         </div>
 
         {session && role !== "admin" && role !== "superadmin" ? (
-          <div className="p-4 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-sm font-extrabold text-center">
+          <div className="p-4 rounded-md border border-destructive/20 bg-destructive/10 text-destructive text-sm font-extrabold text-center">
             {message}
           </div>
         ) : (
-          <section className="bg-white rounded-3xl border border-slate-100 shadow-xl p-6 space-y-4">
+          <section className="bg-card rounded-lg border border-border shadow-sm p-6 space-y-4">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-extrabold text-slate-700 uppercase">Admin Email</label>
+              <label className="text-xs font-extrabold text-foreground uppercase">Admin Email</label>
               <input
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 font-semibold text-sm transition-all"
+                className="w-full px-4 py-3 rounded-md border border-border outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground font-semibold text-sm transition-all"
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -272,9 +272,9 @@ export default function AdminPage() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-extrabold text-slate-700 uppercase">Password</label>
+              <label className="text-xs font-extrabold text-foreground uppercase">Password</label>
               <input
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 font-semibold text-sm transition-all"
+                className="w-full px-4 py-3 rounded-md border border-border outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground font-semibold text-sm transition-all"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -282,7 +282,7 @@ export default function AdminPage() {
               />
             </div>
             <button
-              className="w-full px-6 py-3.5 text-sm font-black text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 rounded-xl shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-70"
+              className="w-full px-6 py-3.5 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-md shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-70"
               type="button"
               disabled={busy}
               onClick={signIn}
@@ -290,17 +290,17 @@ export default function AdminPage() {
               {busy ? "Signing in..." : "Sign in to Dashboard"}
             </button>
             <div
-              className={`rounded-xl border px-4 py-3 text-center text-xs font-extrabold ${
+              className={`rounded-md border px-4 py-3 text-center text-xs font-extrabold ${
                 message.toLowerCase().includes("too long") ||
                 message.toLowerCase().includes("could not") ||
                 message.toLowerCase().includes("unable") ||
                 message.toLowerCase().includes("not authorized") ||
                 message.toLowerCase().includes("please enter") ||
                 message.toLowerCase().includes("did not return")
-                  ? "border-rose-100 bg-rose-50 text-rose-800"
+                  ? "border-destructive/20 bg-destructive/10 text-destructive"
                   : busy
-                    ? "border-orange-100 bg-orange-50 text-orange-800"
-                    : "border-slate-100 bg-slate-50 text-slate-500"
+                    ? "border-primary/20 bg-primary/10 text-primary"
+                    : "border-border bg-muted text-muted-foreground"
               }`}
               role={busy ? "status" : "alert"}
             >
@@ -347,11 +347,11 @@ export default function AdminPage() {
   const publishedCount = countByStatus(issues, "published");
   const actionCount = issues.filter((issue) => ["assigned", "action_started", "action_taken", "action_recorded"].includes(issue.status)).length;
   const statusBars = [
-    { label: "New", value: submittedCount, color: "bg-orange-500" },
-    { label: "Review", value: reviewCount, color: "bg-amber-500" },
-    { label: "Public", value: publicCount, color: "bg-emerald-500" },
+    { label: "New", value: submittedCount, color: "bg-primary" },
+    { label: "Review", value: reviewCount, color: "bg-accent" },
+    { label: "Public", value: publicCount, color: "bg-secondary" },
     { label: "Action", value: actionCount, color: "bg-sky-500" },
-    { label: "Rejected", value: rejectedCount, color: "bg-rose-500" }
+    { label: "Rejected", value: rejectedCount, color: "bg-destructive/100" }
   ];
   const maxStatusValue = Math.max(...statusBars.map((item) => item.value), 1);
   const publicConversion = issues.length ? Math.round((publicCount / issues.length) * 100) : 0;
@@ -405,25 +405,25 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f5f7] text-slate-950">
-      <div className="flex min-h-screen overflow-hidden bg-white">
-        <aside className="hidden w-[260px] shrink-0 flex-col border-r border-slate-200 bg-white p-6 lg:flex">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#fff7f0_0%,#ffffff_48%,#f0faf4_100%)] text-foreground">
+      <div className="flex min-h-screen overflow-hidden bg-card">
+        <aside className="hidden w-[260px] shrink-0 flex-col border-r border-border bg-card p-6 lg:flex">
           <div className="mb-7 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-accent text-primary-foreground ">
                 <ShieldCheck size={19} />
               </span>
               <div>
-                <p className="text-lg font-black">IAI Admin</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{role}</p>
+                <p className="text-lg font-semibold">IAI Admin</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{role}</p>
               </div>
             </div>
-            <button className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-500" onClick={() => setModerationNotice({ tone: "info", title: "Sidebar ready", detail: "Use the status filters below to narrow the moderation queue." })} type="button">
+            <button className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground" onClick={() => setModerationNotice({ tone: "info", title: "Sidebar ready", detail: "Use the status filters below to narrow the moderation queue." })} type="button">
               <Menu size={16} />
             </button>
           </div>
 
-          <div className="space-y-1 border-t border-slate-100 pt-5">
+          <div className="space-y-1 border-t border-border pt-5">
             <AdminNavItem icon={<LayoutDashboard size={17} />} label="Dashboard" active />
             <AdminNavItem icon={<ListChecks size={17} />} label="Moderation Queue" badge={issues.length} />
             <AdminNavItem icon={<FileText size={17} />} label="Public Records" badge={publicCount} />
@@ -431,11 +431,11 @@ export default function AdminPage() {
             {role === "superadmin" ? <AdminNavItem icon={<Settings size={17} />} label="System Settings" /> : null}
           </div>
 
-          <div className="mt-6 space-y-1 border-t border-slate-100 pt-5">
+          <div className="mt-6 space-y-1 border-t border-border pt-5">
             {statuses.slice(0, 7).map((status) => (
               <button
-                className={`flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-bold transition ${
-                  filter === status ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"
+                className={`flex w-full items-center justify-between rounded-md px-4 py-2.5 text-sm font-bold transition ${
+                  filter === status ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
                 }`}
                 key={status}
                 onClick={() => {
@@ -444,55 +444,55 @@ export default function AdminPage() {
                 type="button"
               >
                 <span className="capitalize">{statusLabel(status)}</span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500">{countByStatus(issues, status)}</span>
+                <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{countByStatus(issues, status)}</span>
               </button>
             ))}
           </div>
 
           <div className="mt-auto space-y-5">
-            <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-slate-950 p-5 text-white shadow-xl shadow-blue-950/20">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+            <div className="rounded-lg bg-foreground p-5 text-background">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-card/15">
                 <ShieldAlert size={17} />
               </span>
-              <p className="mt-5 text-sm font-black">Admin controls</p>
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-blue-100">Moderate reports, publish public records, and manage civic accountability workflows.</p>
+              <p className="mt-5 text-sm font-semibold">Admin controls</p>
+              <p className="mt-1 text-xs font-medium leading-relaxed text-background/70">Moderate reports, publish public records, and manage civic accountability workflows.</p>
             </div>
-            <button className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50" onClick={signOut} type="button">
+            <button className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-sm font-bold text-muted-foreground hover:bg-muted" onClick={signOut} type="button">
               <X size={17} />
               Sign Out
             </button>
           </div>
         </aside>
 
-        <section className="min-w-0 flex-1 bg-[#f4f5f7]">
-          <header className="flex min-h-[76px] flex-col gap-4 border-b border-slate-200 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between lg:px-8">
+        <section className="min-w-0 flex-1 bg-muted/30">
+          <header className="flex min-h-[76px] flex-col gap-4 border-b border-border bg-card px-5 py-4 md:flex-row md:items-center md:justify-between lg:px-8">
             <div className="flex items-center gap-3">
-              <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 lg:hidden" onClick={() => setModerationNotice({ tone: "info", title: "Mobile dashboard", detail: "Use the filter dropdown and search field to navigate reports on smaller screens." })} type="button">
+              <button className="flex h-11 w-11 items-center justify-center rounded-md border border-border bg-card text-muted-foreground lg:hidden" onClick={() => setModerationNotice({ tone: "info", title: "Mobile dashboard", detail: "Use the filter dropdown and search field to navigate reports on smaller screens." })} type="button">
                 <Menu size={20} />
               </button>
               <div className="relative w-full min-w-0 md:w-[330px]">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={17} />
                 <input
-                  className="h-11 w-full rounded-full border border-slate-200 bg-white pl-11 pr-16 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-500/10"
+                  className="h-11 w-full rounded-md border border-border bg-card pl-11 pr-16 text-sm font-semibold text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                   onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder="Search anything..."
                   value={searchTerm}
                 />
-                <span className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-slate-200 px-2 py-1 text-[10px] font-black text-slate-400 sm:block">
+                <span className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-border px-2 py-1 text-[10px] font-semibold text-muted-foreground sm:block">
                   Ctrl K
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-blue-200 hover:text-blue-700" onClick={() => void loadAdmin(session)} title="Refresh dashboard" type="button">
+              <button className="flex h-11 w-11 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition hover:border-accent hover:text-accent" onClick={() => void loadAdmin(session)} title="Refresh dashboard" type="button">
                 <RefreshCw size={17} />
               </button>
-              <button className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600" onClick={() => setModerationNotice({ tone: "info", title: "Recent activity", detail: `${recentUpdates.length} recent public action updates are loaded in the activity widget.` })} type="button">
+              <button className="relative flex h-11 w-11 items-center justify-center rounded-md border border-border bg-card text-muted-foreground" onClick={() => setModerationNotice({ tone: "info", title: "Recent activity", detail: `${recentUpdates.length} recent public action updates are loaded in the activity widget.` })} type="button">
                 <Bell size={17} />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-orange-500" />
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-md bg-primary" />
               </button>
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-foreground text-sm font-semibold text-primary-foreground">
                 IAI
               </div>
             </div>
@@ -500,13 +500,13 @@ export default function AdminPage() {
 
           <div className="space-y-5 p-5 lg:p-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <h1 className="text-2xl font-black tracking-tight md:text-3xl">Dashboard</h1>
+              <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Dashboard</h1>
               <div className="flex flex-wrap gap-3">
-                <button className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700" onClick={() => setModerationNotice({ tone: "info", title: "All-time dashboard", detail: "The current dashboard uses all reports loaded from the admin moderation dataset." })} type="button">
+                <button className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground" onClick={() => setModerationNotice({ tone: "info", title: "All-time dashboard", detail: "The current dashboard uses all reports loaded from the admin moderation dataset." })} type="button">
                   All time
                 </button>
                 <select
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 outline-none"
+                  className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground outline-none"
                   value={filter}
                   onChange={(event) => {
                     const next = event.target.value as "all" | IssueStatus;
@@ -518,10 +518,10 @@ export default function AdminPage() {
                     <option key={status} value={status}>{statusLabel(status)}</option>
                   ))}
                 </select>
-                <button className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700" onClick={() => setModerationNotice({ tone: "info", title: "Dashboard widgets are active", detail: "The current cards, queue table, activity feed, and status widgets are already wired to live data." })} type="button">
+                <button className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground" onClick={() => setModerationNotice({ tone: "info", title: "Dashboard widgets are active", detail: "The current cards, queue table, activity feed, and status widgets are already wired to live data." })} type="button">
                   Widgets ready
                 </button>
-                <button className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={visibleIssues.length === 0} onClick={exportVisibleIssues} type="button">
+                <button className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50" disabled={visibleIssues.length === 0} onClick={exportVisibleIssues} type="button">
                   Export
                 </button>
               </div>
@@ -529,27 +529,27 @@ export default function AdminPage() {
 
             {moderationNotice ? (
               <div
-                className={`flex items-start justify-between gap-4 rounded-3xl border p-4 shadow-sm ${
+                className={`flex items-start justify-between gap-4 rounded-lg border p-4 shadow-sm ${
                   moderationNotice.tone === "success"
-                    ? "border-emerald-100 bg-emerald-50 text-emerald-900"
+                    ? "border-secondary/20 bg-secondary/10 text-secondary"
                     : moderationNotice.tone === "error"
-                      ? "border-rose-100 bg-rose-50 text-rose-900"
-                      : "border-orange-100 bg-orange-50 text-orange-900"
+                      ? "border-destructive/20 bg-destructive/10 text-destructive"
+                      : "border-primary/20 bg-primary/10 text-primary"
                 }`}
                 role={moderationNotice.tone === "error" ? "alert" : "status"}
               >
                 <div className="flex gap-3">
                   {moderationNotice.tone === "success" ? (
-                    <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} />
+                    <CheckCircle2 className="mt-0.5 shrink-0 text-secondary" size={20} />
                   ) : (
-                    <AlertCircle className={`mt-0.5 shrink-0 ${moderationNotice.tone === "error" ? "text-rose-600" : "text-orange-600"}`} size={20} />
+                    <AlertCircle className={`mt-0.5 shrink-0 ${moderationNotice.tone === "error" ? "text-destructive" : "text-primary"}`} size={20} />
                   )}
                   <div>
-                    <p className="text-sm font-black">{moderationNotice.title}</p>
+                    <p className="text-sm font-semibold">{moderationNotice.title}</p>
                     <p className="mt-1 text-sm font-semibold opacity-80">{moderationNotice.detail}</p>
                   </div>
                 </div>
-                <button className="rounded-full p-1 opacity-60 transition hover:bg-white/70 hover:opacity-100" onClick={() => setModerationNotice(null)} title="Dismiss message" type="button">
+                <button className="rounded-md p-1 opacity-60 transition hover:bg-card/70 hover:opacity-100" onClick={() => setModerationNotice(null)} title="Dismiss message" type="button">
                   <X size={16} />
                 </button>
               </div>
@@ -564,56 +564,56 @@ export default function AdminPage() {
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
               <div className="space-y-5">
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                   <div className="mb-5 flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-lg font-black">Moderation Activity</h2>
-                      <p className="mt-1 text-sm font-semibold text-slate-500">Workflow movement for public accountability records.</p>
+                      <h2 className="text-lg font-semibold">Moderation Activity</h2>
+                      <p className="mt-1 text-sm font-semibold text-muted-foreground">Workflow movement for public accountability records.</p>
                     </div>
-                    <MoreVertical className="text-slate-400" size={19} />
+                    <MoreVertical className="text-muted-foreground" size={19} />
                   </div>
 
                   <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
                     <div className="flex flex-col justify-center">
-                      <p className="text-4xl font-black">{activityCount}</p>
+                      <p className="text-4xl font-semibold">{activityCount}</p>
                       <div className="mt-3 flex items-center gap-2">
-                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">+{publicConversion}%</span>
-                        <span className="text-xs font-semibold text-slate-500">reports and updates tracked</span>
+                        <span className="rounded-md bg-secondary/10 px-2.5 py-1 text-xs font-medium text-secondary">+{publicConversion}%</span>
+                        <span className="text-xs font-semibold text-muted-foreground">reports and updates tracked</span>
                       </div>
                     </div>
-                    <div className="relative h-44 overflow-hidden rounded-2xl bg-gradient-to-b from-white to-blue-50">
+                    <div className="relative h-44 overflow-hidden rounded-md bg-muted/40">
                       <svg className="h-full w-full" viewBox="0 0 600 190" preserveAspectRatio="none" aria-hidden="true">
-                        <path d="M0 140 C70 130 80 160 140 118 C190 82 220 95 260 106 C315 123 350 68 410 92 C470 116 500 46 600 58" fill="none" stroke="#2563eb" strokeWidth="5" />
+                        <path d="M0 140 C70 130 80 160 140 118 C190 82 220 95 260 106 C315 123 350 68 410 92 C470 116 500 46 600 58" fill="none" stroke="#06038D" strokeWidth="5" />
                         <path d="M0 140 C70 130 80 160 140 118 C190 82 220 95 260 106 C315 123 350 68 410 92 C470 116 500 46 600 58 L600 190 L0 190 Z" fill="url(#chartFill)" opacity="0.35" />
                         <defs>
                           <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-                            <stop stopColor="#2563eb" />
+                            <stop stopColor="#06038D" />
                             <stop offset="1" stopColor="#ffffff" />
                           </linearGradient>
                         </defs>
                       </svg>
-                      <div className="absolute left-[58%] top-12 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-xl">
-                        <p className="font-black">Today</p>
-                        <p className="mt-1 text-blue-700">{publicCount} public records</p>
-                        <p className="text-slate-500">{activeCount} active reports</p>
+                      <div className="absolute left-[58%] top-12 rounded-md border border-border bg-card px-4 py-3 text-xs font-bold text-foreground shadow-sm">
+                        <p className="font-semibold">Today</p>
+                        <p className="mt-1 text-accent">{publicCount} public records</p>
+                        <p className="text-muted-foreground">{activeCount} active reports</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 md:grid-cols-3">
+                  <div className="mt-5 grid gap-3 border-t border-border pt-5 md:grid-cols-3">
                     <MiniProgress label="Submitted" value={submittedCount} tone="blue" />
                     <MiniProgress label="In review" value={reviewCount} tone="green" />
                     <MiniProgress label="Action stage" value={actionCount} tone="orange" />
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                   <div className="mb-5 flex items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-lg font-black">Moderation Queue</h2>
-                      <p className="mt-1 text-sm font-semibold text-slate-500">{visibleIssues.length} visible of {issues.length} reports</p>
+                      <h2 className="text-lg font-semibold">Moderation Queue</h2>
+                      <p className="mt-1 text-sm font-semibold text-muted-foreground">{visibleIssues.length} visible of {issues.length} reports</p>
                     </div>
-                    <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700" onClick={() => void loadAdmin(session)} type="button">
+                    <button className="rounded-md border border-border px-4 py-2 text-sm font-bold text-foreground" onClick={() => void loadAdmin(session)} type="button">
                       Refresh
                     </button>
                   </div>
@@ -621,7 +621,7 @@ export default function AdminPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[680px] text-left">
                       <thead>
-                        <tr className="border-b border-slate-100 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                           <th className="py-3 pr-4">ID</th>
                           <th className="py-3 pr-4">Issue</th>
                           <th className="py-3 pr-4">Status</th>
@@ -632,20 +632,20 @@ export default function AdminPage() {
                       <tbody className="divide-y divide-slate-100">
                         {visibleIssues.map((issue) => (
                           <tr
-                            className={`cursor-pointer transition hover:bg-slate-50 ${selected?.id === issue.id ? "bg-blue-50/50" : ""}`}
+                            className={`cursor-pointer transition hover:bg-muted ${selected?.id === issue.id ? "bg-accent/50" : ""}`}
                             key={issue.id}
                             onClick={() => setSelected(issue)}
                           >
-                            <td className="py-4 pr-4 text-sm font-bold text-slate-500">{issue.publicId}</td>
+                            <td className="py-4 pr-4 text-sm font-bold text-muted-foreground">{issue.publicId}</td>
                             <td className="max-w-[260px] py-4 pr-4">
-                              <p className="truncate text-sm font-black text-slate-950">{issue.title}</p>
-                              <p className="mt-1 truncate text-xs font-semibold capitalize text-slate-400">{statusLabel(issue.category)}</p>
+                              <p className="truncate text-sm font-semibold text-foreground">{issue.title}</p>
+                              <p className="mt-1 truncate text-xs font-semibold capitalize text-muted-foreground">{statusLabel(issue.category)}</p>
                             </td>
                             <td className="py-4 pr-4">
-                              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black capitalize text-slate-700">{statusLabel(issue.status)}</span>
+                              <span className="rounded-md bg-muted px-3 py-1 text-xs font-semibold capitalize text-foreground">{statusLabel(issue.status)}</span>
                             </td>
-                            <td className="py-4 pr-4 text-sm font-semibold text-slate-600">{issue.townVillage}</td>
-                            <td className="py-4 pr-4 text-sm font-semibold text-slate-500">{formatShortDate(issue.createdAt)}</td>
+                            <td className="py-4 pr-4 text-sm font-semibold text-muted-foreground">{issue.townVillage}</td>
+                            <td className="py-4 pr-4 text-sm font-semibold text-muted-foreground">{formatShortDate(issue.createdAt)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -653,70 +653,70 @@ export default function AdminPage() {
                   </div>
 
                   {visibleIssues.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
-                      <Search className="mx-auto text-slate-300" size={30} />
-                      <p className="mt-3 text-sm font-black text-slate-700">No reports found</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-400">Try changing the workflow filter or search term.</p>
+                    <div className="rounded-md border border-dashed border-border bg-muted px-5 py-10 text-center">
+                      <Search className="mx-auto text-muted-foreground" size={30} />
+                      <p className="mt-3 text-sm font-semibold text-foreground">No reports found</p>
+                      <p className="mt-1 text-xs font-semibold text-muted-foreground">Try changing the workflow filter or search term.</p>
                     </div>
                   ) : null}
                 </section>
               </div>
 
               <div className="space-y-5">
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                   <div className="mb-5 flex items-center justify-between">
-                    <h2 className="text-lg font-black">Most Active Stage</h2>
-                    <MoreVertical className="text-slate-400" size={18} />
+                    <h2 className="text-lg font-semibold">Most Active Stage</h2>
+                    <MoreVertical className="text-muted-foreground" size={18} />
                   </div>
                   <div className="flex h-36 items-end justify-between gap-3">
                     {statusBars.map((bar) => (
                       <div className="flex flex-1 flex-col items-center gap-2" key={bar.label}>
-                        <div className="flex h-24 w-full items-end justify-center rounded-2xl bg-slate-100">
-                          <span className={`w-9 rounded-2xl ${bar.color}`} style={{ height: `${Math.max(18, (bar.value / maxStatusValue) * 100)}%` }} />
+                        <div className="flex h-24 w-full items-end justify-center rounded-md bg-muted">
+                          <span className={`w-9 rounded-md ${bar.color}`} style={{ height: `${Math.max(18, (bar.value / maxStatusValue) * 100)}%` }} />
                         </div>
-                        <span className="text-[11px] font-bold text-slate-500">{bar.label}</span>
+                        <span className="text-[11px] font-bold text-muted-foreground">{bar.label}</span>
                       </div>
                     ))}
                   </div>
-                  <p className="mt-4 text-center text-sm font-bold text-slate-500">
+                  <p className="mt-4 text-center text-sm font-bold text-muted-foreground">
                     {mostActiveStage.label} leads with {mostActiveStage.value} reports.
                   </p>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+                <section className="rounded-lg border border-border bg-card p-6 text-center shadow-sm">
                   <div className="mb-2 flex items-center justify-between text-left">
-                    <h2 className="text-lg font-black">Public Record Rate</h2>
-                    <MoreVertical className="text-slate-400" size={18} />
+                    <h2 className="text-lg font-semibold">Public Record Rate</h2>
+                    <MoreVertical className="text-muted-foreground" size={18} />
                   </div>
-                  <div className="mx-auto mt-4 flex h-40 w-56 items-end justify-center overflow-hidden rounded-t-full border-[18px] border-b-0 border-slate-100">
-                    <div className="mb-[-18px] flex h-32 w-44 items-center justify-center rounded-t-full border-[18px] border-b-0 border-emerald-400">
-                      <span className="mb-3 text-4xl font-black">{publicConversion}%</span>
+                  <div className="mx-auto mt-4 flex h-40 w-56 items-end justify-center overflow-hidden rounded-t-full border-[18px] border-b-0 border-border">
+                    <div className="mb-[-18px] flex h-32 w-44 items-center justify-center rounded-t-full border-[18px] border-b-0 border-secondary">
+                      <span className="mb-3 text-4xl font-semibold">{publicConversion}%</span>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm font-semibold text-slate-500">On track for public transparency goals</p>
+                  <p className="mt-3 text-sm font-semibold text-muted-foreground">On track for public transparency goals</p>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                   <div className="mb-5 flex items-center justify-between">
-                    <h2 className="text-lg font-black">Recent Activity</h2>
-                    <MoreVertical className="text-slate-400" size={18} />
+                    <h2 className="text-lg font-semibold">Recent Activity</h2>
+                    <MoreVertical className="text-muted-foreground" size={18} />
                   </div>
                   <div className="space-y-3">
                     {recentUpdates.length > 0 ? (
                       recentUpdates.slice(0, 4).map((update) => (
-                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3" key={update.id}>
+                        <div className="rounded-md border border-border bg-muted p-3" key={update.id}>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-700">{statusLabel(update.updateType)}</span>
-                            <span className="text-[10px] font-bold text-slate-400">{formatShortDate(update.createdAt)}</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-widest text-accent">{statusLabel(update.updateType)}</span>
+                            <span className="text-[10px] font-bold text-muted-foreground">{formatShortDate(update.createdAt)}</span>
                           </div>
-                          <p className="mt-2 line-clamp-2 text-xs font-semibold leading-relaxed text-slate-600">{update.body}</p>
-                          <p className="mt-2 truncate text-[10px] font-black text-slate-400">{update.publicId ?? "Private update"} · {update.issueTitle ?? "Report"}</p>
+                          <p className="mt-2 line-clamp-2 text-xs font-semibold leading-relaxed text-muted-foreground">{update.body}</p>
+                          <p className="mt-2 truncate text-[10px] font-semibold text-muted-foreground">{update.publicId ?? "Private update"} · {update.issueTitle ?? "Report"}</p>
                         </div>
                       ))
                     ) : (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-                        <p className="text-sm font-black text-slate-700">No recent updates</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-400">Public action updates will appear here.</p>
+                      <div className="rounded-md border border-dashed border-border bg-muted px-4 py-8 text-center">
+                        <p className="text-sm font-semibold text-foreground">No recent updates</p>
+                        <p className="mt-1 text-xs font-semibold text-muted-foreground">Public action updates will appear here.</p>
                       </div>
                     )}
                   </div>
@@ -725,24 +725,24 @@ export default function AdminPage() {
             </div>
 
             {role === "superadmin" ? (
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <div className="mb-5 flex items-center gap-3 border-b border-border pb-4">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-md bg-accent/10 text-accent">
                     <Settings size={20} />
                   </span>
                   <div>
-                    <h2 className="text-lg font-black text-slate-900">Superadmin Controls</h2>
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Authorize community administrators</p>
+                    <h2 className="text-lg font-semibold text-foreground">Superadmin Controls</h2>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Authorize community administrators</p>
                   </div>
                 </div>
 
                 <div className="flex max-w-3xl flex-col gap-4 md:flex-row md:items-end">
                   <div className="flex w-full flex-1 flex-col gap-1.5">
-                    <label className="text-xs font-extrabold uppercase text-slate-700">Citizen Account Email</label>
+                    <label className="text-xs font-extrabold uppercase text-foreground">Citizen Account Email</label>
                     <div className="relative flex items-center">
-                      <Mail className="absolute left-4 text-slate-400" size={16} />
+                      <Mail className="absolute left-4 text-muted-foreground" size={16} />
                       <input
-                        className="w-full rounded-2xl border border-slate-200 py-3 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        className="w-full rounded-md border border-border py-3 pl-12 pr-4 text-sm font-semibold text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                         value={promoteEmail}
                         onChange={(event) => setPromoteEmail(event.target.value)}
                         placeholder="name@domain.com"
@@ -750,7 +750,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <button
-                    className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-accent px-6 py-3 text-sm font-medium text-accent-foreground shadow-sm transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
                     type="button"
                     disabled={promoting}
                     onClick={promoteToAdmin}
@@ -760,10 +760,10 @@ export default function AdminPage() {
                 </div>
 
                 {promoteMessage ? (
-                  <div className={`mt-4 max-w-3xl rounded-xl border p-4 text-xs font-extrabold ${
+                  <div className={`mt-4 max-w-3xl rounded-md border p-4 text-xs font-extrabold ${
                     promoteMessage.toLowerCase().includes("successfully")
-                      ? "border-emerald-100 bg-emerald-50 text-emerald-800"
-                      : "border-rose-100 bg-rose-50 text-rose-800"
+                      ? "border-secondary/20 bg-secondary/10 text-secondary"
+                      : "border-destructive/20 bg-destructive/10 text-destructive"
                   }`}>
                     {promoteMessage}
                   </div>
@@ -774,10 +774,10 @@ export default function AdminPage() {
             {selected ? (
               <ModerationForm issue={selected} busy={busy} onSave={saveModeration} />
             ) : (
-              <section className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-                <Search className="mb-3 text-slate-300" size={32} />
-                <h2 className="text-lg font-bold text-slate-800">Select a report</h2>
-                <p className="mt-1 max-w-sm text-sm font-semibold text-slate-400">Choose a report from the moderation queue to review private attributes and save decisions.</p>
+              <section className="flex min-h-[320px] flex-col items-center justify-center rounded-lg border border-border bg-card p-10 text-center shadow-sm">
+                <Search className="mb-3 text-muted-foreground" size={32} />
+                <h2 className="text-lg font-bold text-foreground">Select a report</h2>
+                <p className="mt-1 max-w-sm text-sm font-semibold text-muted-foreground">Choose a report from the moderation queue to review private attributes and save decisions.</p>
               </section>
             )}
           </div>
@@ -790,19 +790,19 @@ export default function AdminPage() {
 function AdminNavItem({ icon, label, active = false, badge }: { icon: ReactNode; label: string; active?: boolean; badge?: number }) {
   return (
     <button
-      className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-black transition ${
-        active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+      className={`flex w-full items-center justify-between rounded-md px-4 py-3 text-sm font-semibold transition ${
+        active ? "bg-accent/10 text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground"
       }`}
       type="button"
     >
       <span className="flex items-center gap-3">
-        <span className={active ? "text-blue-600" : "text-slate-400"}>{icon}</span>
+        <span className={active ? "text-accent" : "text-muted-foreground"}>{icon}</span>
         {label}
       </span>
       {typeof badge === "number" ? (
-        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-600">{badge}</span>
+        <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary">{badge}</span>
       ) : active ? (
-        <span className="h-2 w-2 rounded-full bg-blue-600" />
+        <span className="h-2 w-2 rounded-md bg-accent" />
       ) : null}
     </button>
   );
@@ -822,23 +822,23 @@ function DashboardMetric({
   tone: "slate" | "orange" | "green" | "blue" | "rose";
 }) {
   const tones = {
-    slate: "bg-slate-100 text-slate-700",
-    orange: "bg-orange-50 text-orange-700",
-    green: "bg-emerald-50 text-emerald-700",
-    blue: "bg-blue-50 text-blue-700",
-    rose: "bg-rose-50 text-rose-700"
+    slate: "bg-muted text-foreground",
+    orange: "bg-primary/10 text-primary",
+    green: "bg-secondary/10 text-secondary",
+    blue: "bg-accent/10 text-accent",
+    rose: "bg-destructive/10 text-destructive"
   };
 
   return (
-    <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/5">
+    <section className="rounded-lg border border-border bg-card p-5 ">
       <div className="flex items-start justify-between gap-4">
-        <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${tones[tone]}`}>{icon}</span>
-        <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Live</span>
+        <span className={`flex h-12 w-12 items-center justify-center rounded-md ${tones[tone]}`}>{icon}</span>
+        <span className="rounded-md bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Live</span>
       </div>
-      <p className="mt-5 text-sm font-bold text-slate-500">{label}</p>
+      <p className="mt-5 text-sm font-bold text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-end justify-between gap-4">
-        <strong className="text-4xl font-black tracking-tight text-slate-950">{value}</strong>
-        <span className="text-right text-xs font-extrabold text-slate-400">{detail}</span>
+        <strong className="text-4xl font-semibold tracking-tight text-foreground">{value}</strong>
+        <span className="text-right text-xs font-extrabold text-muted-foreground">{detail}</span>
       </div>
     </section>
   );
@@ -846,17 +846,17 @@ function DashboardMetric({
 
 function MiniProgress({ label, value, tone }: { label: string; value: number; tone: "blue" | "green" | "orange" }) {
   const tones = {
-    blue: "bg-blue-600",
-    green: "bg-emerald-500",
-    orange: "bg-orange-500"
+    blue: "bg-accent",
+    green: "bg-secondary",
+    orange: "bg-primary"
   };
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4">
-      <p className="text-sm font-black text-slate-950">{value}</p>
-      <p className="mt-1 text-xs font-semibold text-slate-500">{label}</p>
-      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
-        <span className={`block h-full rounded-full ${tones[tone]}`} style={{ width: `${Math.min(100, Math.max(8, value * 18))}%` }} />
+    <div className="rounded-md border border-border bg-card p-4">
+      <p className="text-sm font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-xs font-semibold text-muted-foreground">{label}</p>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-md bg-muted">
+        <span className={`block h-full rounded-md ${tones[tone]}`} style={{ width: `${Math.min(100, Math.max(8, value * 18))}%` }} />
       </div>
     </div>
   );
@@ -864,9 +864,9 @@ function MiniProgress({ label, value, tone }: { label: string; value: number; to
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white px-3 py-4">
-      <p className="text-xs font-black uppercase tracking-widest text-slate-400">{label}</p>
-      <p className="mt-2 text-xl font-black text-slate-950">{value}</p>
+    <div className="rounded-md border border-border bg-card px-3 py-4">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
     </div>
   );
 }
@@ -899,81 +899,81 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
 
   async function addUpdate() {
     if (!updateBody.trim()) return;
-    try { 
-      await addIssueUpdate(issue.id, updateType, updateBody, updatePublic); 
-      setUpdateBody(""); 
-      setUpdateMessage("Action update added successfully."); 
-    } catch (error) { 
-      setUpdateMessage(error instanceof Error ? error.message : "Unable to add update."); 
+    try {
+      await addIssueUpdate(issue.id, updateType, updateBody, updatePublic);
+      setUpdateBody("");
+      setUpdateMessage("Action update added successfully.");
+    } catch (error) {
+      setUpdateMessage(error instanceof Error ? error.message : "Unable to add update.");
     }
   }
 
   return (
-    <section className="bg-white rounded-3xl border border-slate-100 shadow-xl p-8 space-y-6">
-      <div className="border-b border-slate-100 pb-4">
+    <section className="bg-card rounded-lg border border-border shadow-sm p-8 space-y-6">
+      <div className="border-b border-border pb-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-orange-50 text-orange-700 border border-orange-100 uppercase tracking-wider">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
             {issue.publicId}
           </span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wider">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold bg-accent/10 text-accent border border-accent uppercase tracking-wider">
             {issue.status.replaceAll("_", " ")}
           </span>
         </div>
-        <h2 className="text-xl font-extrabold text-slate-950 tracking-tight leading-snug">
+        <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-snug">
           {issue.title}
         </h2>
-        <p className="text-xs font-semibold text-slate-500 mt-1">
+        <p className="text-xs font-semibold text-muted-foreground mt-1">
           {issue.townVillage}, {issue.district || issue.state} · {issue.category.replaceAll("_", " ")} · {issue.severity ?? "moderate"} severity · {issue.trafficCondition ?? "heavy"}
         </p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Public Description</h3>
-          <p className="text-sm font-semibold text-slate-700 leading-relaxed bg-slate-50/50 p-4 rounded-2xl border border-slate-100">{issue.summary}</p>
+          <h3 className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest mb-1.5">Public Description</h3>
+          <p className="text-sm font-semibold text-foreground leading-relaxed bg-muted/50 p-4 rounded-md border border-border">{issue.summary}</p>
         </div>
 
         {issue.suggestedSolution && (
           <div>
-            <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Citizen Suggested Solution</h3>
-            <p className="text-sm font-semibold text-slate-700 leading-relaxed bg-slate-50/50 p-4 rounded-2xl border border-slate-100">{issue.suggestedSolution}</p>
+            <h3 className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest mb-1.5">Citizen Suggested Solution</h3>
+            <p className="text-sm font-semibold text-foreground leading-relaxed bg-muted/50 p-4 rounded-md border border-border">{issue.suggestedSolution}</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Location details</h3>
-            <div className="bg-slate-50/30 border border-slate-100 rounded-2xl p-4 text-xs font-bold text-slate-600 space-y-2">
-              <p><span className="text-slate-400">Location:</span> {issue.locationName || issue.townVillage}</p>
-              <p><span className="text-slate-400">Type:</span> {issue.locationKind ?? "area"}</p>
-              <p><span className="text-slate-400">Citizen Wording:</span> {issue.citizenLandmark || "not provided"}</p>
-              <p><span className="text-slate-400">Pincode:</span> {issue.pincode || "not provided"}</p>
+            <h3 className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest mb-1.5">Location details</h3>
+            <div className="bg-muted/30 border border-border rounded-md p-4 text-xs font-bold text-muted-foreground space-y-2">
+              <p><span className="text-muted-foreground">Location:</span> {issue.locationName || issue.townVillage}</p>
+              <p><span className="text-muted-foreground">Type:</span> {issue.locationKind ?? "area"}</p>
+              <p><span className="text-muted-foreground">Citizen Wording:</span> {issue.citizenLandmark || "not provided"}</p>
+              <p><span className="text-muted-foreground">Pincode:</span> {issue.pincode || "not provided"}</p>
             </div>
           </div>
 
           <div>
-            <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Private reporter details</h3>
-            <div className="bg-rose-50/10 border border-rose-100/50 rounded-2xl p-4 text-xs font-bold text-slate-600 space-y-2">
-              <p><span className="text-slate-400">Reporter ID:</span> {issue.reporterId ?? "not available"}</p>
-              <p><span className="text-slate-400">Private address:</span> {issue.privateAddress || "not provided"}</p>
-              <p className="text-[10px] font-extrabold text-rose-600">Private reporter coordinates and phone are hidden in the database view.</p>
+            <h3 className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest mb-1.5">Private reporter details</h3>
+            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 text-xs font-bold text-muted-foreground space-y-2">
+              <p><span className="text-muted-foreground">Reporter ID:</span> {issue.reporterId ?? "not available"}</p>
+              <p><span className="text-muted-foreground">Private address:</span> {issue.privateAddress || "not provided"}</p>
+              <p className="text-[10px] font-extrabold text-destructive">Private reporter coordinates and phone are hidden in the database view.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <hr className="border-slate-100" />
+      <hr className="border-border" />
 
       {/* Moderation Controls Form */}
       <div className="space-y-4">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Moderation Actions</h3>
-        
+        <h3 className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest">Moderation Actions</h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase">Workflow Status</label>
-            <select 
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm bg-white"
-              value={status} 
+            <label className="text-xs font-extrabold text-foreground uppercase">Workflow Status</label>
+            <select
+              className="w-full px-4 py-2.5 rounded-md border border-border outline-none text-foreground font-semibold text-sm bg-card"
+              value={status}
               onChange={(event) => setStatus(event.target.value as IssueStatus)}
             >
               {statuses.map((item) => (
@@ -983,67 +983,67 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase">Authority Name</label>
-            <input 
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm"
-              value={authorityName} 
-              onChange={(event) => setAuthorityName(event.target.value)} 
+            <label className="text-xs font-extrabold text-foreground uppercase">Authority Name</label>
+            <input
+              className="w-full px-4 py-2.5 rounded-md border border-border outline-none text-foreground font-semibold text-sm"
+              value={authorityName}
+              onChange={(event) => setAuthorityName(event.target.value)}
               placeholder="e.g. Pune Municipal Corporation"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase">Authority Reference Code</label>
-            <input 
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm"
-              value={authorityReference} 
-              onChange={(event) => setAuthorityReference(event.target.value)} 
+            <label className="text-xs font-extrabold text-foreground uppercase">Authority Reference Code</label>
+            <input
+              className="w-full px-4 py-2.5 rounded-md border border-border outline-none text-foreground font-semibold text-sm"
+              value={authorityReference}
+              onChange={(event) => setAuthorityReference(event.target.value)}
               placeholder="e.g. PMC-2026-90432"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase">Internal Notes (Private)</label>
-            <textarea 
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm"
-              rows={2} 
-              value={internalNotes} 
-              onChange={(event) => setInternalNotes(event.target.value)} 
+            <label className="text-xs font-extrabold text-foreground uppercase">Internal Notes (Private)</label>
+            <textarea
+              className="w-full px-4 py-2.5 rounded-md border border-border outline-none text-foreground font-semibold text-sm"
+              rows={2}
+              value={internalNotes}
+              onChange={(event) => setInternalNotes(event.target.value)}
               placeholder="Add admin notes..."
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-extrabold text-slate-700 uppercase">Rejection / Postponement Reason</label>
-          <textarea 
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm"
-            rows={2} 
-            value={rejectionReason} 
-            onChange={(event) => setRejectionReason(event.target.value)} 
+          <label className="text-xs font-extrabold text-foreground uppercase">Rejection / Postponement Reason</label>
+          <textarea
+            className="w-full px-4 py-2.5 rounded-md border border-border outline-none text-foreground font-semibold text-sm"
+            rows={2}
+            value={rejectionReason}
+            onChange={(event) => setRejectionReason(event.target.value)}
             placeholder="Reason visible to reporter if rejected..."
           />
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 py-3 bg-slate-50/50 rounded-2xl px-4 border border-slate-100 text-xs font-bold text-slate-700">
+        <div className="flex flex-col md:flex-row gap-4 py-3 bg-muted/50 rounded-md px-4 border border-border text-xs font-bold text-foreground">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} /> 
+            <input type="checkbox" checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} />
             <span>Public after review</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={isSensitive} onChange={(event) => setIsSensitive(event.target.checked)} /> 
+            <input type="checkbox" checked={isSensitive} onChange={(event) => setIsSensitive(event.target.checked)} />
             <span>Sensitive report</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={indexable} onChange={(event) => setIndexable(event.target.checked)} /> 
+            <input type="checkbox" checked={indexable} onChange={(event) => setIndexable(event.target.checked)} />
             <span>Allow Search Engine Indexing</span>
           </label>
         </div>
 
         <button
-          className="w-full px-6 py-3 text-sm font-black text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-          type="button" 
-          disabled={busy} 
+          className="w-full px-6 py-3 text-sm font-semibold text-background bg-foreground hover:bg-foreground/90 rounded-md  transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+          type="button"
+          disabled={busy}
           onClick={() => setConfirmOpen(true)}
         >
           {busy ? "Saving Decision..." : "Save Moderation Decision"}
@@ -1051,22 +1051,22 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
       </div>
 
       {confirmOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="moderation-confirm-title">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl shadow-slate-950/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="moderation-confirm-title">
+          <div className="w-full max-w-lg rounded-lg border border-border bg-card p-6 ">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <span className="inline-flex items-center gap-1 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-orange-700">
+                <span className="inline-flex items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary">
                   Review before saving
                 </span>
-                <h3 id="moderation-confirm-title" className="mt-4 text-xl font-black text-slate-950">
+                <h3 id="moderation-confirm-title" className="mt-4 text-xl font-semibold text-foreground">
                   Save this moderation decision?
                 </h3>
-                <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">
+                <p className="mt-2 text-sm font-semibold leading-relaxed text-muted-foreground">
                   This will update the report workflow status and moderation settings for {issue.publicId}.
                 </p>
               </div>
               <button
-                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-md p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 onClick={() => setConfirmOpen(false)}
                 title="Close confirmation"
                 type="button"
@@ -1075,25 +1075,25 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
               </button>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
+            <div className="mt-5 rounded-md border border-border bg-muted p-4 text-sm font-semibold text-foreground">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-slate-400">Current status</span>
-                <strong className="text-right text-slate-900">{issue.status.replaceAll("_", " ")}</strong>
+                <span className="text-muted-foreground">Current status</span>
+                <strong className="text-right text-foreground">{issue.status.replaceAll("_", " ")}</strong>
               </div>
               <div className="mt-3 flex items-center justify-between gap-4">
-                <span className="text-slate-400">New status</span>
-                <strong className="text-right text-orange-700">{status.replaceAll("_", " ")}</strong>
+                <span className="text-muted-foreground">New status</span>
+                <strong className="text-right text-primary">{status.replaceAll("_", " ")}</strong>
               </div>
               <div className="mt-3 flex items-center justify-between gap-4">
-                <span className="text-slate-400">Public page</span>
-                <strong className="text-right text-slate-900">{isPublic ? "Allowed after review" : "Hidden"}</strong>
+                <span className="text-muted-foreground">Public page</span>
+                <strong className="text-right text-foreground">{isPublic ? "Allowed after review" : "Hidden"}</strong>
               </div>
               <div className="mt-3 flex items-center justify-between gap-4">
-                <span className="text-slate-400">Search indexing</span>
-                <strong className="text-right text-slate-900">{indexable ? "Allowed" : "Blocked"}</strong>
+                <span className="text-muted-foreground">Search indexing</span>
+                <strong className="text-right text-foreground">{indexable ? "Allowed" : "Blocked"}</strong>
               </div>
               {isSensitive ? (
-                <p className="mt-4 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-extrabold text-rose-700">
+                <p className="mt-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-extrabold text-destructive">
                   Sensitive report is enabled. Please confirm public details are safe before saving.
                 </p>
               ) : null}
@@ -1101,14 +1101,14 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
-                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                className="rounded-md border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
                 onClick={() => setConfirmOpen(false)}
                 type="button"
               >
                 Review again
               </button>
               <button
-                className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg shadow-slate-950/10 transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-md bg-foreground px-5 py-3 text-sm font-semibold text-background shadow-sm transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={busy}
                 onClick={async () => {
                   setConfirmOpen(false);
@@ -1123,18 +1123,18 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
         </div>
       ) : null}
 
-      <hr className="border-slate-100" />
+      <hr className="border-border" />
 
       {/* Public Action Timeline Updates */}
       <div className="space-y-4">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Public Action Updates</h3>
-        
+        <h3 className="text-xs font-extrabold text-muted-foreground uppercase tracking-widest">Public Action Updates</h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase">Update Type</label>
-            <select 
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm bg-white"
-              value={updateType} 
+            <label className="text-xs font-extrabold text-foreground uppercase">Update Type</label>
+            <select
+              className="w-full px-4 py-2.5 rounded-md border border-border outline-none text-foreground font-semibold text-sm bg-card"
+              value={updateType}
               onChange={(event) => setUpdateType(event.target.value)}
             >
               <option value="authority_response">Authority response</option>
@@ -1144,35 +1144,35 @@ function ModerationForm({ issue, busy, onSave }: { issue: AdminIssue; busy: bool
             </select>
           </div>
 
-          <div className="flex items-center gap-2 pt-6 text-xs font-bold text-slate-700">
+          <div className="flex items-center gap-2 pt-6 text-xs font-bold text-foreground">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={updatePublic} onChange={(event) => setUpdatePublic(event.target.checked)} /> 
+              <input type="checkbox" checked={updatePublic} onChange={(event) => setUpdatePublic(event.target.checked)} />
               <span>Show on public issue page timeline</span>
             </label>
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-extrabold text-slate-700 uppercase">Update details</label>
-          <textarea 
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm"
-            rows={3} 
-            value={updateBody} 
-            onChange={(event) => setUpdateBody(event.target.value)} 
-            placeholder="Describe what action was taken, comments from officers, etc..." 
+          <label className="text-xs font-extrabold text-foreground uppercase">Update details</label>
+          <textarea
+            className="w-full px-4 py-2.5 rounded-md border border-border outline-none text-foreground font-semibold text-sm"
+            rows={3}
+            value={updateBody}
+            onChange={(event) => setUpdateBody(event.target.value)}
+            placeholder="Describe what action was taken, comments from officers, etc..."
           />
         </div>
 
-        <button 
-          className="px-6 py-2.5 text-xs font-black text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-all cursor-pointer" 
-          type="button" 
+        <button
+          className="px-6 py-2.5 text-xs font-semibold text-foreground bg-muted hover:bg-muted border border-border rounded-md transition-all cursor-pointer"
+          type="button"
           onClick={addUpdate}
         >
           Add Public Update
         </button>
 
         {updateMessage && (
-          <p className="text-xs font-black text-orange-600 bg-orange-50/50 px-4 py-2 rounded-lg border border-orange-100 w-fit">{updateMessage}</p>
+          <p className="text-xs font-semibold text-primary bg-primary/10 px-4 py-2 rounded-md border border-primary/20 w-fit">{updateMessage}</p>
         )}
       </div>
     </section>

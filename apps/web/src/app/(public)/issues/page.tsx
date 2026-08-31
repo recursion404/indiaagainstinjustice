@@ -54,45 +54,45 @@ export default async function IssuesPage() {
           {issues.map((issue) => {
             const isUrgent = issue.trafficCondition === "severe" || issue.severity === "critical";
             return (
-              <article className="group flex flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all hover:border-slate-200 hover:shadow-md" key={issue.id}>
+              <article className="group flex flex-col rounded-lg border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30" key={issue.id}>
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <Badge tone={isUrgent ? "urgent" : "muted"}>{isUrgent ? "urgent" : issue.status.replaceAll("_", " ")}</Badge>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{issue.publicId}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{issue.publicId}</span>
                 </div>
 
-                <h2 className="mb-2 text-lg font-black leading-snug text-slate-950 transition-colors group-hover:text-orange-600">
+                <h2 className="mb-2 text-lg font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
                   {issue.title}
                 </h2>
-                <p className="mb-3 flex items-center gap-1 text-xs font-semibold text-slate-500">
-                  <MapPin size={14} className="text-slate-400" /> {issue.locationName || issue.townVillage}, {issue.district || issue.state}
+                <p className="mb-3 flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                  <MapPin size={14} className="text-muted-foreground" /> {issue.locationName || issue.townVillage}, {issue.district || issue.state}
                 </p>
-                <p className="mb-4 text-xs font-black uppercase tracking-wide text-slate-400">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {categoryLabel(issue.category)} · {issue.severity ?? "moderate"} severity
                 </p>
-                <p className="mb-6 line-clamp-3 text-sm font-medium leading-relaxed text-slate-600">{issue.summary}</p>
+                <p className="mb-6 line-clamp-3 text-sm font-medium leading-relaxed text-muted-foreground">{issue.summary}</p>
 
-                <div className="mt-auto space-y-4 border-t border-slate-50 pt-4">
+                <div className="mt-auto space-y-4 border-t border-border pt-4">
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-lg bg-slate-50/70 p-2">
-                      <CheckCircle2 size={14} className="mx-auto mb-1 text-emerald-600" />
-                      <strong className="block text-xs text-slate-800">{issue.confirmationCount ?? 0}</strong>
-                      <span className="text-[9px] font-bold uppercase text-slate-400">confirmed</span>
+                    <div className="rounded-lg bg-muted/70 p-2">
+                      <CheckCircle2 size={14} className="mx-auto mb-1 text-secondary" />
+                      <strong className="block text-xs text-foreground">{issue.confirmationCount ?? 0}</strong>
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground">confirmed</span>
                     </div>
-                    <div className="rounded-lg bg-slate-50/70 p-2">
-                      <AlertTriangle size={14} className="mx-auto mb-1 text-amber-600" />
-                      <strong className="block text-xs text-slate-800">{issue.notObservedCount ?? 0}</strong>
-                      <span className="text-[9px] font-bold uppercase text-slate-400">not seen</span>
+                    <div className="rounded-lg bg-muted/70 p-2">
+                      <AlertTriangle size={14} className="mx-auto mb-1 text-primary" />
+                      <strong className="block text-xs text-foreground">{issue.notObservedCount ?? 0}</strong>
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground">not seen</span>
                     </div>
-                    <div className="rounded-lg bg-slate-50/70 p-2">
-                      <Clock size={14} className="mx-auto mb-1 text-blue-500" />
-                      <strong className="block text-xs text-slate-800">
+                    <div className="rounded-lg bg-muted/70 p-2">
+                      <Clock size={14} className="mx-auto mb-1 text-accent" />
+                      <strong className="block text-xs text-foreground">
                         {new Date(issue.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </strong>
-                      <span className="text-[9px] font-bold uppercase text-slate-400">reported</span>
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground">reported</span>
                     </div>
                   </div>
 
-                  <Link href={`/issues/${issue.slug}`} className="inline-flex w-full items-center justify-center rounded-xl bg-slate-50 py-2.5 text-xs font-black text-slate-700 transition-all hover:bg-orange-50 hover:text-orange-700">
+                  <Link href={`/issues/${issue.slug}`} className="inline-flex w-full items-center justify-center rounded-md bg-muted py-2.5 text-xs font-semibold text-foreground transition-all hover:bg-primary/10 hover:text-primary">
                     Open public record
                   </Link>
                 </div>

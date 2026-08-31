@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { LogIn, UserPlus, Mail, Lock, User, AlertCircle, CheckCircle, ShieldAlert } from "lucide-react";
-import Link from "next/link";
+import { LogIn, UserPlus, Mail, Lock, User, AlertCircle, CheckCircle } from "lucide-react";
+import { Badge, Button, Card, Field, PageShell, inputClassName } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -94,47 +94,39 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="container max-w-md mx-auto py-16 px-4">
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-900/5 p-8 space-y-6">
-        {/* Card Header */}
+    <PageShell className="max-w-md py-16">
+      <Card className="space-y-6">
         <div className="text-center">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-orange-50 text-orange-700 border border-orange-100 uppercase tracking-widest mb-3">
-            {isSignUp ? "Citizen Join" : "Secure Gate"}
-          </span>
-          <h1 className="text-2xl font-black text-slate-950 tracking-tight leading-snug">
+          <Badge className="mx-auto mb-3">{isSignUp ? "Citizen join" : "Secure gate"}</Badge>
+          <h1 className="text-2xl font-semibold text-foreground tracking-tight leading-snug">
             {isSignUp ? "Create a Citizen Account" : "Sign In to Your Account"}
           </h1>
-          <p className="text-xs font-semibold text-slate-500 mt-1">
+          <p className="text-xs font-semibold text-muted-foreground mt-1">
             {isSignUp 
               ? "Join India's premier public accountability and civic reporting framework." 
               : "Access your dashboard, manage reports, and participate in local polls."}
           </p>
         </div>
 
-        {/* Alerts */}
         {error && (
-          <div className="flex gap-2 p-4 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-xs font-bold leading-relaxed items-start">
-            <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+          <div className="flex gap-2 p-4 rounded-md border border-destructive/20 bg-destructive/10 text-destructive text-xs font-bold leading-relaxed items-start">
+            <AlertCircle size={16} className="text-destructive shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="flex gap-2 p-4 rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-800 text-xs font-bold leading-relaxed items-start">
-            <CheckCircle size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+          <div className="flex gap-2 p-4 rounded-md border border-secondary/20 bg-secondary/10 text-secondary text-xs font-bold leading-relaxed items-start">
+            <CheckCircle size={16} className="text-secondary shrink-0 mt-0.5" />
             <span>{success}</span>
           </div>
         )}
 
-        {/* Input Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                <User size={12} className="text-slate-400" /> Full Name
-              </label>
+            <Field label={<span className="flex items-center gap-1"><User size={12} className="text-muted-foreground" /> Full Name</span>}>
               <input
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all"
+                className={inputClassName}
                 type="text"
                 placeholder="e.g. Ganesh Pawar"
                 value={fullName}
@@ -142,15 +134,12 @@ export default function LoginPage() {
                 disabled={loading}
                 required
               />
-            </div>
+            </Field>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-              <Mail size={12} className="text-slate-400" /> Email Address
-            </label>
+          <Field label={<span className="flex items-center gap-1"><Mail size={12} className="text-muted-foreground" /> Email Address</span>}>
             <input
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all"
+              className={inputClassName}
               type="email"
               placeholder="e.g. name@domain.com"
               value={email}
@@ -158,14 +147,11 @@ export default function LoginPage() {
               disabled={loading}
               required
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-              <Lock size={12} className="text-slate-400" /> Password
-            </label>
+          <Field label={<span className="flex items-center gap-1"><Lock size={12} className="text-muted-foreground" /> Password</span>}>
             <input
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-slate-800 font-semibold text-sm focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all"
+              className={inputClassName}
               type="password"
               placeholder="••••••••"
               value={password}
@@ -173,13 +159,11 @@ export default function LoginPage() {
               disabled={loading}
               required
             />
-          </div>
+          </Field>
 
-
-
-          <button
+          <Button
             type="submit"
-            className="w-full px-5 py-3 text-sm font-black text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 rounded-xl shadow-md transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full"
             disabled={loading}
           >
             {loading ? (
@@ -193,22 +177,22 @@ export default function LoginPage() {
                 <LogIn size={16} /> Sign In
               </>
             )}
-          </button>
+          </Button>
         </form>
 
-        {/* View Toggle */}
-        <div className="border-t border-slate-100 pt-4 text-center">
+        <div className="border-t border-border pt-4 text-center">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline transition-all"
+            className="text-xs font-medium text-primary hover:underline"
             disabled={loading}
+            type="button"
           >
             {isSignUp 
               ? "Already have a Citizen account? Sign In" 
               : "New to the platform? Join as Citizen"}
           </button>
         </div>
-      </div>
-    </main>
+      </Card>
+    </PageShell>
   );
 }

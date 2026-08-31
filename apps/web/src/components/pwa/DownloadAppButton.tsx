@@ -69,10 +69,10 @@ export function DownloadAppButton({ compact = false, className }: DownloadAppBut
     <div className={cn("relative shrink-0", className)}>
       <button
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-full border font-black transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-800",
+          "inline-flex h-10 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary",
           compact
-            ? "w-full px-2 py-2 text-[10px] uppercase tracking-[0.08em] text-slate-600 sm:text-xs"
-            : "border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm shadow-slate-200/60"
+            ? "w-full px-2 text-[10px] uppercase tracking-wide text-muted-foreground sm:text-xs"
+            : "border-input bg-background px-4 text-foreground shadow-sm"
         )}
         onClick={downloadApp}
         type="button"
@@ -83,7 +83,7 @@ export function DownloadAppButton({ compact = false, className }: DownloadAppBut
       {hint ? (
         <div
           className={cn(
-            "absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-orange-100 bg-white px-4 py-3 text-xs font-extrabold leading-relaxed text-slate-700 shadow-xl shadow-slate-900/10",
+            "absolute right-0 top-full z-50 mt-2 w-64 rounded-md border border-border bg-popover px-4 py-3 text-xs font-medium leading-relaxed text-popover-foreground shadow-md",
             compact && "left-0 right-auto w-56"
           )}
           role="status"

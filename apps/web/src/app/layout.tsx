@@ -47,15 +47,15 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ff6b00" },
-    { media: "(prefers-color-scheme: dark)", color: "#ff8a00" }
+    { media: "(prefers-color-scheme: light)", color: "#FF671F" },
+    { media: "(prefers-color-scheme: dark)", color: "#06038D" }
   ]
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" className="h-full">
-      <body className="h-full bg-slate-50 text-slate-900 selection:bg-orange-100 antialiased">
+      <body className="h-full bg-background text-foreground antialiased">
         <ServiceWorkerRegistration />
         {children}
       </body>

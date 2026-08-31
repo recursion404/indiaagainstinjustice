@@ -82,10 +82,10 @@ export default function Navigation() {
 
   return (
     <nav className="flex min-w-0 flex-1 items-center justify-end gap-2">
-      <div className="hidden items-center gap-1 rounded-full border border-slate-200 bg-white/80 p-1 shadow-sm shadow-slate-200/60 lg:flex">
+      <div className="hidden items-center gap-1 lg:flex">
         {links.map((link) => (
           <Link
-            className="rounded-full px-3 py-2 text-sm font-black text-slate-600 transition hover:bg-orange-100 hover:text-orange-800 xl:px-4"
+            className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground xl:px-4"
             href={link.href}
             key={link.href}
           >
@@ -97,7 +97,7 @@ export default function Navigation() {
       <div className="grid max-w-md flex-1 grid-cols-4 gap-1 xl:hidden">
         {[links[0], links[1], session ? { href: "/admin" as const, label: "Account" } : { href: "/login" as const, label: "Sign in" }].map((link) => (
           <Link
-            className="rounded-2xl px-2 py-2 text-center text-[10px] font-black uppercase tracking-[0.08em] text-slate-600 hover:bg-orange-100 hover:text-orange-800 sm:text-xs"
+            className="rounded-md px-2 py-2 text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:bg-muted hover:text-foreground sm:text-xs"
             href={link.href}
             key={link.href}
           >
@@ -111,7 +111,7 @@ export default function Navigation() {
 
       {isAdmin ? (
         <Link
-          className="hidden shrink-0 items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-black text-orange-800 transition hover:bg-orange-100 md:inline-flex"
+          className="hidden h-10 shrink-0 items-center gap-2 rounded-md border border-primary/20 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15 md:inline-flex"
           href="/admin"
         >
           <ShieldCheck size={16} />
@@ -120,13 +120,13 @@ export default function Navigation() {
       ) : null}
 
       {session ? (
-        <div className="hidden shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-200/60 md:flex">
-          <span className="inline-flex max-w-36 items-center gap-2 truncate text-sm font-black text-slate-700">
-            <UserCircle size={16} className="shrink-0 text-orange-600" />
+        <div className="hidden h-10 shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 shadow-sm md:flex">
+          <span className="inline-flex max-w-36 items-center gap-2 truncate text-sm font-medium text-foreground">
+            <UserCircle size={16} className="shrink-0 text-primary" />
             <span className="truncate">{displayName}</span>
           </span>
           <button
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-orange-700"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             onClick={handleSignOut}
             title="Log out"
             type="button"
@@ -136,7 +136,7 @@ export default function Navigation() {
         </div>
       ) : (
         <Link
-          className="hidden shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm shadow-slate-200/60 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-800 md:inline-flex"
+          className="hidden h-10 shrink-0 items-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted md:inline-flex"
           href="/login"
         >
           <LogIn size={16} />
