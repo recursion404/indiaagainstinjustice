@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Badge, Card, PageShell, SectionHeader, StatCard } from "@/components/ui";
+import { Badge, Card, PageShell, SectionHeader } from "@/components/ui";
 import { categoryLabel, getPublicIssueBySlug } from "@/lib/data";
 import { siteConfig } from "@/lib/site";
 import IssueActions from "./IssueActions";
@@ -87,11 +87,6 @@ export default async function IssuePage({ params }: IssuePageProps) {
               <Badge tone="green">{issue.status.replaceAll("_", " ")}</Badge>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <StatCard label="Citizen supports" value={issue.supportCount ?? 0} />
-              <StatCard label="Public shares" value={issue.shareCount ?? 0} />
-            </div>
-
             <div className="rounded-lg border border-border bg-muted p-5">
               <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Location
@@ -105,13 +100,6 @@ export default async function IssuePage({ params }: IssuePageProps) {
                 </p>
               ) : null}
             </div>
-          </Card>
-
-          <Card className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              Public summary
-            </h2>
-            <p className="text-lg leading-8 text-foreground">{issue.summary}</p>
           </Card>
 
           <IssueComments issueId={issue.id} />

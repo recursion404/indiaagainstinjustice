@@ -16,9 +16,9 @@ export default async function RecordsPage() {
   return (
     <PageShell>
       <SectionHeader
-        eyebrow="Public directory"
-        title="Public civic records"
-        description="Browse approved reports and accountability records by location, category, support, and public status."
+        eyebrow="Records archive"
+        title="Long-term civic records"
+        description="Browse approved issue pages kept as public-reference records for tracking, sharing, and accountability over time."
       />
 
       {issues.length ? (

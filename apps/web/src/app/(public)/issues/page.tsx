@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock, MapPin } from "lucide-react";
 import { categoryLabel, getPublicIssues } from "@/lib/data";
-import { Badge, ButtonLink, EmptyState, PageShell, SectionHeader, StatCard } from "@/components/ui";
+import { Badge, ButtonLink, EmptyState, PageShell, SectionHeader } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Public Civic Issues in India",
@@ -28,26 +28,14 @@ export default async function IssuesPage() {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-  const activeReports = issues.filter((issue) => issue.trafficCondition !== "cleared").length;
-  const verifiedReports = issues.filter((issue) =>
-    ["verified", "published", "assigned", "action_started", "action_taken", "resolved"].includes(issue.status)
-  ).length;
-  const urgentReports = issues.filter((issue) => issue.trafficCondition === "severe" || issue.severity === "critical").length;
-
   return (
     <PageShell>
       <SectionHeader
         eyebrow="Public issue registry"
-        title="Current civic issues"
+        title="Public issues"
         description="Reviewed citizen reports become privacy-safe public records that communities can support, share, verify, and track."
-        action={<ButtonLink href="/report">Report an Issue</ButtonLink>}
+        action={<ButtonLink href="/report">Submit report</ButtonLink>}
       />
-
-      <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <StatCard label="Active issues" value={activeReports} />
-        <StatCard label="Verified reports" value={verifiedReports} tone="success" />
-        <StatCard label="Urgent problems" value={urgentReports} tone="urgent" />
-      </div>
 
       {issues.length ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

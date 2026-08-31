@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { LogIn, UserPlus, Mail, Lock, User, AlertCircle, CheckCircle } from "lucide-react";
 import { Badge, Button, Card, Field, PageShell, inputClassName } from "@/components/ui";
+import { dashboardPathForProfile, roleLabel, signupRoleOptions, type AccountRole, type RoleApprovalStatus } from "@/lib/accountRoles";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [requestedRole, setRequestedRole] = useState<Exclude<AccountRole, "superadmin">>("citizen");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export default function LoginPage() {
           options: {
             data: {
               full_name: fullName,
+              requested_role: requestedRole,
             },
           },
         });
@@ -54,10 +57,16 @@ export default function LoginPage() {
 
         if (data.session) {
           setSuccess("Account created and signed in successfully!");
-          router.push("/");
+          router.push(requestedRole === "admin" ? "/dashboard/admin-pending" : dashboardPathForProfile({
+            role: requestedRole,
+            requested_role: requestedRole,
+            role_approval_status: "not_required"
+          }));
           router.refresh();
         } else {
-          setSuccess("Account created successfully! Please check your email to verify your address.");
+          setSuccess(requestedRole === "admin"
+            ? "Account created. After email verification, your admin access request will wait for superadmin approval."
+            : "Account created successfully! Please check your email to verify your address.");
         }
       } else {
         // Run Supabase Auth SignIn
@@ -74,15 +83,15 @@ export default function LoginPage() {
           // Verify role to determine redirection
           const { data: profile } = await supabase
             .from("profiles")
-            .select("role")
+            .select("role, requested_role, role_approval_status")
             .eq("id", data.session.user.id)
             .single();
 
-          if (profile && (profile.role === "admin" || profile.role === "superadmin")) {
-            router.push("/admin");
-          } else {
-            router.push("/");
-          }
+          router.push(dashboardPathForProfile(profile ? {
+            role: profile.role as AccountRole,
+            requested_role: (profile.requested_role ?? profile.role) as AccountRole,
+            role_approval_status: (profile.role_approval_status ?? "not_required") as RoleApprovalStatus
+          } : null));
           router.refresh();
         }
       }
@@ -97,9 +106,9 @@ export default function LoginPage() {
     <PageShell className="max-w-md py-16">
       <Card className="space-y-6">
         <div className="text-center">
-          <Badge className="mx-auto mb-3">{isSignUp ? "Citizen join" : "Secure gate"}</Badge>
+          <Badge className="mx-auto mb-3">{isSignUp ? "Create account" : "Secure gate"}</Badge>
           <h1 className="text-2xl font-semibold text-foreground tracking-tight leading-snug">
-            {isSignUp ? "Create a Citizen Account" : "Sign In to Your Account"}
+            {isSignUp ? "Create Your Account" : "Sign In to Your Account"}
           </h1>
           <p className="text-xs font-semibold text-muted-foreground mt-1">
             {isSignUp 
@@ -137,6 +146,33 @@ export default function LoginPage() {
             </Field>
           )}
 
+          {isSignUp ? (
+            <Field label="Account type">
+              <div className="grid gap-2">
+                {signupRoleOptions.map((option) => (
+                  <button
+                    className={`rounded-md border px-3 py-3 text-left transition-colors ${
+                      requestedRole === option.value
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-border bg-background text-foreground hover:bg-muted"
+                    }`}
+                    key={option.value}
+                    onClick={() => setRequestedRole(option.value)}
+                    type="button"
+                  >
+                    <span className="block text-sm font-medium">{option.label}</span>
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">{option.description}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {requestedRole === "admin"
+                  ? "Admin accounts can sign in immediately, but moderation tools unlock only after superadmin approval."
+                  : `${roleLabel(requestedRole)} accounts can start using their dashboard after signup.`}
+              </p>
+            </Field>
+          ) : null}
+
           <Field label={<span className="flex items-center gap-1"><Mail size={12} className="text-muted-foreground" /> Email Address</span>}>
             <input
               className={inputClassName}
@@ -170,7 +206,7 @@ export default function LoginPage() {
               "Processing..."
             ) : isSignUp ? (
               <>
-                <UserPlus size={16} /> Create Citizen Account
+                <UserPlus size={16} /> Create Account
               </>
             ) : (
               <>
@@ -188,8 +224,8 @@ export default function LoginPage() {
             type="button"
           >
             {isSignUp 
-              ? "Already have a Citizen account? Sign In" 
-              : "New to the platform? Join as Citizen"}
+              ? "Already have an account? Sign In"
+              : "New to the platform? Create an account"}
           </button>
         </div>
       </Card>

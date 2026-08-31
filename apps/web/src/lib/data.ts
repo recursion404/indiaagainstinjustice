@@ -1,4 +1,5 @@
 import { issueCategoryLabels, type IssueCategory, type IssueStatus, type PublicIssue } from "@citizens-first/shared";
+import type { AccountRole, RoleApprovalStatus } from "./accountRoles";
 import { supabase } from "./supabase";
 
 export type WebsiteIssue = PublicIssue & {
@@ -200,6 +201,18 @@ export type AdminIssueUpdate = {
   createdAt: string;
 };
 
+export type AdminApprovalRequest = {
+  id: string;
+  fullName: string | null;
+  displayName: string | null;
+  email: string | null;
+  role: AccountRole;
+  requestedRole: AccountRole;
+  roleApprovalStatus: RoleApprovalStatus;
+  roleRequestedAt: string | null;
+  createdAt: string | null;
+};
+
 export async function getAdminIssues(status?: IssueStatus) {
   let query = supabase
     .from("reports")
@@ -244,6 +257,56 @@ export async function getRecentIssueUpdates(limit = 8) {
     isPublic: Boolean(row.is_public),
     createdAt: row.created_at
   })) as AdminIssueUpdate[];
+}
+
+export async function getPendingAdminRequests() {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, display_name, email, role, requested_role, role_approval_status, role_requested_at, created_at")
+    .eq("requested_role", "admin")
+    .eq("role_approval_status", "pending")
+    .order("role_requested_at", { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row: Record<string, any>) => ({
+    id: row.id,
+    fullName: row.full_name ?? null,
+    displayName: row.display_name ?? null,
+    email: row.email ?? null,
+    role: row.role as AccountRole,
+    requestedRole: row.requested_role as AccountRole,
+    roleApprovalStatus: row.role_approval_status as RoleApprovalStatus,
+    roleRequestedAt: row.role_requested_at ?? null,
+    createdAt: row.created_at ?? null
+  })) as AdminApprovalRequest[];
+}
+
+export async function decideAdminRequest(profileId: string, decision: "approved" | "rejected") {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) throw new Error("Please sign in as a superadmin.");
+
+  const payload = decision === "approved"
+    ? {
+        role: "admin",
+        role_approval_status: "approved",
+        role_approved_at: new Date().toISOString(),
+        role_approved_by: sessionData.session.user.id
+      }
+    : {
+        role: "citizen",
+        role_approval_status: "rejected",
+        role_approved_at: new Date().toISOString(),
+        role_approved_by: sessionData.session.user.id
+      };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update(payload)
+    .eq("id", profileId)
+    .eq("requested_role", "admin");
+
+  if (error) throw error;
 }
 
 export async function getAdminIssue(issueId: string) {

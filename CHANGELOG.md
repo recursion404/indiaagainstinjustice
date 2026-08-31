@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-08-31 - Role Dashboards, Admin Review Queue, and Public Issue Cleanup
+
+- Added scalable role routing for citizen, volunteer, NGO, admin, and superadmin accounts so each user type can land on its own dashboard instead of sharing one conditional dashboard surface.
+- Added the admin approval workflow for requested admin accounts, including a pending admin dashboard and superadmin approval tooling.
+- Added migration `20260831000200_0015_add_role_requests_and_dashboards.sql` for requested roles, role approval status, superadmin checks, and profile role-change protection.
+- Reworked the admin dashboard into a focused shadcn-style moderation overview using live report counts while removing template-like sections that did not map to the IAI workflow.
+- Removed the public website header from the admin mental model by keeping admin navigation inside the admin workspace instead of mixing public-site actions into the dashboard.
+- Added `/admin/review-queue` so admins can view reported issues newest-first, search them, filter by workflow status, and open each issue for review.
+- Added `/admin/review-queue/[id]` so admins can review issue details, change workflow status, and add optional extra context from a simple form.
+- Added migration `20260831000300_0016_create_issue_updates.sql` for admin-added issue context and public timeline updates, with RLS and grants documented through the migration route.
+- Improved the admin issue review save flow so status updates and extra-context failures are reported separately when the `issue_updates` table has not yet been migrated.
+- Removed the three stat cards from `/issues` so the public issue registry goes directly from the page heading into issue cards.
+- Cleaned the public issue detail page by removing citizen support counts, public share counts, the duplicate public summary block, and the support button.
+- Replaced device-native sharing with explicit issue-sharing actions: copy a prepared message to clipboard, open WhatsApp, open X, or open Facebook with the issue link.
+
 ## 2026-08-31 - Shadcn-Style UI System Rewrite
 
 - Reworked the website UI around shadcn-style design primitives and CSS variable tokens instead of one-off glossy Tailwind styling.

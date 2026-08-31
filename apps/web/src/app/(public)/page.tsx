@@ -11,6 +11,21 @@ const focusAreas = [
   "Local governance",
 ];
 
+const workflowSteps = [
+  {
+    title: "Submit report",
+    description: "A citizen shares a new issue privately for admin review.",
+  },
+  {
+    title: "Public issue",
+    description: "Approved reports become browseable issue pages people can support and discuss.",
+  },
+  {
+    title: "Records archive",
+    description: "Published issue pages are kept as long-term civic records for tracking and reference.",
+  },
+];
+
 export default async function HomePage() {
   const issues = await getPublicIssues(6);
   const supportTotal = issues.reduce((sum, issue) => sum + (issue.supportCount ?? 0), 0);
@@ -30,7 +45,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/report">Report an issue</ButtonLink>
+            <ButtonLink href="/report">Submit report</ButtonLink>
             <ButtonLink href="/issues" variant="secondary">
               See public issues
             </ButtonLink>
@@ -67,6 +82,18 @@ export default async function HomePage() {
             </div>
           </div>
         </Card>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        {workflowSteps.map((step, index) => (
+          <Card className="space-y-3" key={step.title}>
+            <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-muted text-sm font-medium text-muted-foreground">
+              {index + 1}
+            </span>
+            <h2 className="text-lg font-semibold text-foreground">{step.title}</h2>
+            <p className="text-sm leading-6 text-muted-foreground">{step.description}</p>
+          </Card>
+        ))}
       </section>
 
       <section className="space-y-6">

@@ -216,7 +216,7 @@ export default function ReportPage() {
     <PageShell className="max-w-5xl">
       <SectionHeader
         eyebrow={<Badge><ShieldCheck size={12} /> Private before review</Badge>}
-        title="Report an injustice or civic issue"
+        title="Submit a civic issue report"
         description="Submit a simple or detailed report. Private citizen details, location precision, and media stay hidden until an administrator approves what can safely become public."
       />
 

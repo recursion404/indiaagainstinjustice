@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy, Facebook, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui";
 
@@ -10,34 +11,51 @@ type IssueActionsProps = {
 
 export default function IssueActions({ issueTitle, issueUrl }: IssueActionsProps) {
   const [message, setMessage] = useState<string | null>(null);
+  const shareMessage = `Public civic issue: ${issueTitle}\n\nView the issue details on India Against Injustice:\n${issueUrl}`;
 
-  async function shareIssue() {
-    const text = `${issueTitle} - Support this public civic issue on India Against Injustice.`;
-
+  async function copyShareMessage() {
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: issueTitle,
-          text,
-          url: issueUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(`${text} ${issueUrl}`);
-        setMessage("Issue link copied.");
-      }
+      await navigator.clipboard.writeText(shareMessage);
+      setMessage("Share message copied.");
     } catch {
-      setMessage("Sharing was cancelled.");
+      setMessage("Could not copy the message. Please copy the page link from your browser.");
     }
   }
+
+  function openShareUrl(url: string) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  const encodedMessage = encodeURIComponent(shareMessage);
+  const encodedUrl = encodeURIComponent(issueUrl);
+  const encodedTitle = encodeURIComponent(issueTitle);
 
   return (
     <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/10 p-5">
       <div className="flex flex-wrap gap-3">
-        <Button type="button" onClick={shareIssue}>
-          Share issue
+        <Button type="button" onClick={copyShareMessage}>
+          <Copy size={16} /> Copy message
         </Button>
-        <Button type="button" variant="secondary" onClick={() => setMessage("Support voting is available in the app after sign in.")}>
-          Support
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => openShareUrl(`https://wa.me/?text=${encodedMessage}`)}
+        >
+          <MessageCircle size={16} /> WhatsApp
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => openShareUrl(`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`)}
+        >
+          X
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => openShareUrl(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`)}
+        >
+          <Facebook size={16} /> Facebook
         </Button>
       </div>
       {message ? <p className="text-sm font-semibold text-muted-foreground">{message}</p> : null}
