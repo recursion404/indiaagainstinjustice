@@ -4,6 +4,8 @@ import { AlertTriangle, CheckCircle2, Clock, MapPin } from "lucide-react";
 import { categoryLabel, getPublicIssues } from "@/lib/data";
 import { Badge, ButtonLink, EmptyState, PageShell, SectionHeader } from "@/components/ui";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Public Civic Issues in India",
   description:

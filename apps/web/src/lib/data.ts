@@ -190,6 +190,16 @@ export type AdminIssue = WebsiteIssue & {
   reporterId: string | null;
 };
 
+export type AdminIssuePhoto = {
+  id: string;
+  issueId: string;
+  storagePath: string;
+  altText: string | null;
+  isPublic: boolean;
+  createdAt: string;
+  signedUrl: string | null;
+};
+
 export type AdminIssueUpdate = {
   id: string;
   issueId: string;
@@ -318,6 +328,42 @@ export async function getAdminIssue(issueId: string) {
 
   if (error) throw error;
   return { ...mapIssue(data), reporterId: data.reporter_id ?? null } as AdminIssue;
+}
+
+export async function getAdminIssuePhotos(issueId: string) {
+  const { data, error } = await supabase
+    .from("issue_photos")
+    .select("id, issue_id, storage_path, alt_text, is_public, created_at")
+    .eq("issue_id", issueId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+
+  const rows = data ?? [];
+  const paths = rows.map((row) => row.storage_path).filter(Boolean);
+  const signedUrlsByPath = new Map<string, string>();
+
+  if (paths.length > 0) {
+    const { data: signedUrls, error: signedUrlError } = await supabase
+      .storage
+      .from("issue-photos")
+      .createSignedUrls(paths, 60 * 30);
+
+    if (signedUrlError) throw signedUrlError;
+    for (const item of signedUrls ?? []) {
+      if (item.path && item.signedUrl) signedUrlsByPath.set(item.path, item.signedUrl);
+    }
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    issueId: row.issue_id,
+    storagePath: row.storage_path,
+    altText: row.alt_text ?? null,
+    isPublic: Boolean(row.is_public),
+    createdAt: row.created_at,
+    signedUrl: signedUrlsByPath.get(row.storage_path) ?? null
+  })) as AdminIssuePhoto[];
 }
 
 export async function updateIssueModeration(

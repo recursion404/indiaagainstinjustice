@@ -6,6 +6,8 @@ import { siteConfig } from "@/lib/site";
 import IssueActions from "./IssueActions";
 import { IssueComments } from "./IssueComments";
 
+export const dynamic = "force-dynamic";
+
 type IssuePageProps = {
   params: {
     slug: string;

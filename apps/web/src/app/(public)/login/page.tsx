@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const selectedRoleOption = signupRoleOptions.find((option) => option.value === requestedRole) ?? signupRoleOptions[0];
 
   // Clear states on view toggle
   useEffect(() => {
@@ -104,6 +105,21 @@ export default function LoginPage() {
 
   return (
     <PageShell className="max-w-md py-16">
+      {error || success ? (
+        <div className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2" role="alert" aria-live="assertive">
+          <div
+            className={`flex items-start gap-3 rounded-lg border p-4 text-sm font-medium shadow-lg ${
+              error
+                ? "border-destructive/20 bg-destructive text-destructive-foreground"
+                : "border-secondary/20 bg-secondary text-secondary-foreground"
+            }`}
+          >
+            {error ? <AlertCircle className="mt-0.5 shrink-0" size={18} /> : <CheckCircle className="mt-0.5 shrink-0" size={18} />}
+            <span>{error ?? success}</span>
+          </div>
+        </div>
+      ) : null}
+
       <Card className="space-y-6">
         <div className="text-center">
           <Badge className="mx-auto mb-3">{isSignUp ? "Create account" : "Secure gate"}</Badge>
@@ -116,20 +132,6 @@ export default function LoginPage() {
               : "Access your dashboard, manage reports, and participate in local polls."}
           </p>
         </div>
-
-        {error && (
-          <div className="flex gap-2 p-4 rounded-md border border-destructive/20 bg-destructive/10 text-destructive text-xs font-bold leading-relaxed items-start">
-            <AlertCircle size={16} className="text-destructive shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="flex gap-2 p-4 rounded-md border border-secondary/20 bg-secondary/10 text-secondary text-xs font-bold leading-relaxed items-start">
-            <CheckCircle size={16} className="text-secondary shrink-0 mt-0.5" />
-            <span>{success}</span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
@@ -148,28 +150,25 @@ export default function LoginPage() {
 
           {isSignUp ? (
             <Field label="Account type">
-              <div className="grid gap-2">
+              <select
+                className={inputClassName}
+                disabled={loading}
+                onChange={(event) => setRequestedRole(event.target.value as Exclude<AccountRole, "superadmin">)}
+                value={requestedRole}
+              >
                 {signupRoleOptions.map((option) => (
-                  <button
-                    className={`rounded-md border px-3 py-3 text-left transition-colors ${
-                      requestedRole === option.value
-                        ? "border-primary/30 bg-primary/10 text-primary"
-                        : "border-border bg-background text-foreground hover:bg-muted"
-                    }`}
-                    key={option.value}
-                    onClick={() => setRequestedRole(option.value)}
-                    type="button"
-                  >
-                    <span className="block text-sm font-medium">{option.label}</span>
-                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">{option.description}</span>
-                  </button>
+                  <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
+              </select>
+              <div className="rounded-md border border-border bg-muted p-3 text-sm leading-6 text-muted-foreground">
+                <p className="font-medium text-foreground">{selectedRoleOption.label}</p>
+                <p className="mt-1">{selectedRoleOption.description}</p>
+                <p className="mt-2 text-xs">
+                  {requestedRole === "admin"
+                    ? "Admin accounts can sign in immediately, but moderation tools unlock only after superadmin approval."
+                    : `${roleLabel(requestedRole)} accounts can start using their dashboard after signup.`}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {requestedRole === "admin"
-                  ? "Admin accounts can sign in immediately, but moderation tools unlock only after superadmin approval."
-                  : `${roleLabel(requestedRole)} accounts can start using their dashboard after signup.`}
-              </p>
             </Field>
           ) : null}
 

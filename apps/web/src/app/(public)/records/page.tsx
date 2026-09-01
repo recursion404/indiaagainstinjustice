@@ -4,6 +4,8 @@ import { ArrowRight, MapPin, Share2, ThumbsUp } from "lucide-react";
 import { categoryLabel, getPublicIssues } from "@/lib/data";
 import { Badge, EmptyState, PageShell, SectionHeader } from "@/components/ui";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Public Civic Records in India",
   description:

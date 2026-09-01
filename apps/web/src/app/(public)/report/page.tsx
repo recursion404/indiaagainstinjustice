@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { CivicCategory } from "@citizens-first/shared";
-import { Camera, MapPin, Send, ShieldCheck } from "lucide-react";
+import { AlertCircle, Camera, CheckCircle, MapPin, Send, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Badge, Button, Card, Field, Notice, PageShell, SectionHeader, cn, inputClassName } from "@/components/ui";
 
@@ -51,6 +51,7 @@ export default function ReportPage() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "urgent" | "muted">("muted");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -106,14 +107,19 @@ export default function ReportPage() {
   function useLocation() {
     if (!navigator.geolocation) {
       setMessage("Location is not available in this browser.");
+      setMessageTone("urgent");
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setCoordinates({ latitude: position.coords.latitude, longitude: position.coords.longitude });
         setMessage("Location attached. It will remain private until an admin approves public details.");
+        setMessageTone("success");
       },
-      () => setMessage("Location permission was not granted.")
+      () => {
+        setMessage("Location permission was not granted.");
+        setMessageTone("urgent");
+      }
     );
   }
 
@@ -152,6 +158,7 @@ export default function ReportPage() {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setMessage("Please fix the highlighted fields before submitting.");
+      setMessageTone("urgent");
       return;
     }
 
@@ -205,8 +212,10 @@ export default function ReportPage() {
       setCustomCategory("");
       setCategory("traffic");
       setMode("simple");
+      setMessageTone("success");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to submit report.");
+      setMessageTone("urgent");
     } finally {
       setBusy(false);
     }
@@ -214,6 +223,22 @@ export default function ReportPage() {
 
   return (
     <PageShell className="max-w-5xl">
+      {message ? (
+        <div className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2" role="alert" aria-live="assertive">
+          <div
+            className={cn(
+              "flex items-start gap-3 rounded-lg border p-4 text-sm font-medium shadow-lg",
+              messageTone === "urgent" && "border-destructive/20 bg-destructive text-destructive-foreground",
+              messageTone === "success" && "border-secondary/20 bg-secondary text-secondary-foreground",
+              messageTone === "muted" && "border-border bg-card text-foreground"
+            )}
+          >
+            {messageTone === "urgent" ? <AlertCircle className="mt-0.5 shrink-0" size={18} /> : <CheckCircle className="mt-0.5 shrink-0" size={18} />}
+            <span>{message}</span>
+          </div>
+        </div>
+      ) : null}
+
       <SectionHeader
         eyebrow={<Badge><ShieldCheck size={12} /> Private before review</Badge>}
         title="Submit a civic issue report"
@@ -385,11 +410,6 @@ export default function ReportPage() {
         </div>
       </Card>
 
-      {message ? (
-        <Notice className="mt-6" tone={Object.keys(errors).length > 0 || message.toLowerCase().includes("not") || message.toLowerCase().includes("required") || message.toLowerCase().includes("error") ? "urgent" : "success"}>
-          {message}
-        </Notice>
-      ) : null}
     </PageShell>
   );
 }

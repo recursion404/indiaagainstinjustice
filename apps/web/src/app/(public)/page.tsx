@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Badge, ButtonLink, Card, PageShell, SectionHeader, StatCard } from "@/components/ui";
 import { getPublicIssues } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 const focusAreas = [
   "Roads and infrastructure",
   "Education",

@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { IssueStatus } from "@citizens-first/shared";
 import { issueStatuses } from "@citizens-first/shared";
-import { ArrowLeft, CheckCircle2, FileText, MessageSquare, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, FileText, MessageSquare, ShieldAlert } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, Field, Notice, PageShell, inputClassName } from "@/components/ui";
-import { addIssueUpdate, getAdminIssue, type AdminIssue, updateIssueModeration } from "@/lib/data";
+import { addIssueUpdate, getAdminIssue, getAdminIssuePhotos, type AdminIssue, type AdminIssuePhoto, updateIssueModeration } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 
 function statusLabel(status: string) {
@@ -24,6 +24,7 @@ export default function ReviewIssuePage() {
   const params = useParams<{ id: string }>();
   const issueId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [issue, setIssue] = useState<AdminIssue | null>(null);
+  const [photos, setPhotos] = useState<AdminIssuePhoto[]>([]);
   const [status, setStatus] = useState<IssueStatus>("submitted");
   const [rejectionReason, setRejectionReason] = useState("");
   const [context, setContext] = useState("");
@@ -58,8 +59,12 @@ export default function ReviewIssuePage() {
           return;
         }
 
-        const loadedIssue = await getAdminIssue(issueId);
+        const [loadedIssue, loadedPhotos] = await Promise.all([
+          getAdminIssue(issueId),
+          getAdminIssuePhotos(issueId)
+        ]);
         setIssue(loadedIssue);
+        setPhotos(loadedPhotos);
         setStatus(loadedIssue.status);
         setRejectionReason(loadedIssue.rejectionReason ?? "");
       } catch (error) {
@@ -180,6 +185,49 @@ export default function ReviewIssuePage() {
                 <InfoBlock label="Pincode" value={issue.pincode || "Not provided"} />
                 <InfoBlock label="Location detail" value={issue.locationName || "Not provided"} />
               </div>
+
+              <section>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Camera size={14} /> Photo evidence
+                  </h3>
+                  <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {photos.length} {photos.length === 1 ? "image" : "images"}
+                  </span>
+                </div>
+                {photos.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {photos.map((photo, index) => (
+                      <a
+                        className="group overflow-hidden rounded-md border border-border bg-muted"
+                        href={photo.signedUrl ?? undefined}
+                        key={photo.id}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {photo.signedUrl ? (
+                          <img
+                            alt={photo.altText ?? `Evidence photo ${index + 1} for ${issue.publicId}`}
+                            className="aspect-video w-full object-cover transition group-hover:scale-[1.02]"
+                            src={photo.signedUrl}
+                          />
+                        ) : (
+                          <div className="flex aspect-video items-center justify-center p-4 text-center text-sm font-medium text-muted-foreground">
+                            Signed image URL unavailable
+                          </div>
+                        )}
+                        <div className="border-t border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground">
+                          {photo.isPublic ? "Public evidence" : "Private evidence"} · {formatDate(photo.createdAt)}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-dashed border-border bg-muted p-4 text-sm text-muted-foreground">
+                    No photo evidence attached to this issue.
+                  </div>
+                )}
+              </section>
 
               <section className="rounded-md border border-destructive/20 bg-destructive/10 p-4">
                 <div className="flex gap-2 text-destructive">
